@@ -8,7 +8,7 @@ Endpoints
     POST /v1/transcribe         Live: {"audio": base64 16 kHz mono 16-bit PCM} -> {"text": ...}
     POST /v1/listen             First-Hand Processing: send the request as it grows
                                 {"session": "...", "text": "what was that message Tho"}
-    POST /v1/chat               {"messages": [...], "images": [...], "modality": "text"|"audio"|"video",
+    POST /v1/chat               {"messages": [...], "images": [...], "modality": "text"|"audio"|"screen",
                                  "session": "...", "stream": true}
                                 streams Server-Sent Events: route, understood, tool, text, done
     GET  /embed.js              drop-in chat widget for any website
@@ -154,8 +154,8 @@ async def chat(body: ChatBody, request: Request):
     check_key(request)
     if body.messages[-1].role != "user":
         raise HTTPException(400, "The last message must be from the user.")
-    if body.modality not in ("text", "audio", "video"):
-        raise HTTPException(400, "modality must be text, audio or video.")
+    if body.modality not in ("text", "audio", "screen"):
+        raise HTTPException(400, "modality must be text, audio or screen.")
     images = _images(body)
     msgs = [m.model_dump() for m in body.messages if m.role in ("user", "assistant")]
     stop = threading.Event()

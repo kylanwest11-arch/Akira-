@@ -108,7 +108,7 @@
     ".ic{border:1px solid var(--line);background:var(--bg);color:var(--muted);width:38px;height:38px;border-radius:10px;cursor:pointer;display:grid;place-items:center;flex:none}",
     ".ic svg{width:18px;height:18px}.ic.on{background:var(--soft);color:var(--accent);border-color:var(--accent)}",
     ".send{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}",
-    "video{width:100%;max-height:150px;object-fit:cover;background:#000}",
+    "video{width:100%;max-height:150px;object-fit:contain;background:#000}",
     ".thumbs{display:flex;gap:6px;padding:6px 12px 0}.thumbs img{width:44px;height:44px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}",
     "button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}",
     "@media (prefers-reduced-motion:reduce){*{animation:none!important}}"
@@ -117,7 +117,7 @@
   var ICON = {
     chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>',
     mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
-    cam: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/></svg>',
+    screen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>',
     img: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></svg>',
     send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
     stop: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="7" y="7" width="10" height="10" rx="1.5"/></svg>'
@@ -160,7 +160,7 @@
     "<div class='log' aria-live='polite'></div>" +
     "<div class='fhp'></div><div class='thumbs' hidden></div>" +
     "<form><button type='button' class='ic img' aria-label='Add image'>" + ICON.img + "</button>" +
-    "<button type='button' class='ic cam' aria-label='Camera (Cast)'>" + ICON.cam + "</button>" +
+    "<button type='button' class='ic scr' aria-label='Share your screen (Cast)'>" + ICON.screen + "</button>" +
     "<button type='button' class='ic mic' aria-label='Talk (Live)'>" + ICON.mic + "</button>" +
     "<textarea rows='1' placeholder='Ask Akira…' aria-label='Message'></textarea>" +
     "<button type='submit' class='ic send' aria-label='Send'>" + ICON.send + "</button>" +
@@ -171,7 +171,7 @@
   var fhpBox = $(".fhp"), st = $(".st"), video = $("video"), thumbs = $(".thumbs"), fileIn = $("input[type=file]");
   if (ds.launcher === "false") launch.hidden = true;
 
-  var history = [], busy = null, pendingImages = [], camStream = null, voiceMode = false, liveNative = false;
+  var history = [], busy = null, pendingImages = [], screenStream = null, voiceMode = false, liveNative = false;
 
   function open() { panel.hidden = false; launch.setAttribute("aria-expanded", "true"); input.focus(); }
   function close() { panel.hidden = true; launch.setAttribute("aria-expanded", "false"); }
@@ -231,8 +231,8 @@
     if (busy || (!text && !pendingImages.length)) return;
     open();
     var images = pendingImages.slice();
-    if (camStream) images.push(grabFrame());
-    var mode = modality || (camStream ? "video" : voiceMode ? "audio" : "text");
+    if (screenStream) images.push(grabFrame());
+    var mode = modality || (screenStream ? "screen" : voiceMode ? "audio" : "text");
     bubble("u", esc(text || "(image)"));
     history.push({ role: "user", content: text || "What's in this image?" });
     input.value = ""; input.style.height = "auto"; fhpBox.innerHTML = ""; lastListened = "";
@@ -267,7 +267,7 @@
       busy = null;
       $(".send").innerHTML = ICON.send; $(".send").setAttribute("aria-label", "Send");
       if (answer) history.push({ role: "assistant", content: answer });
-      if (mode === "audio" || mode === "video") speak(answer);
+      if (mode === "audio" || (mode === "screen" && voiceMode)) speak(answer);
       session = Math.random().toString(36).slice(2) + Date.now().toString(36);
     });
   }
@@ -320,7 +320,7 @@
         $(".mic").classList.remove("on"); recording = null;
         if (send_ && chunks.length) transcribe(chunks).then(function (r) {
           var text = (r && r.text) || input.value;
-          if (text.trim()) send(text, camStream ? "video" : "audio");
+          if (text.trim()) send(text, screenStream ? "screen" : "audio");
         });
       } };
       proc.onaudioprocess = function (e) {
@@ -358,7 +358,7 @@
     };
     rec.onend = function () {
       $(".mic").classList.remove("on"); rec = null;
-      if (input.value.trim()) send(input.value, camStream ? "video" : "audio");
+      if (input.value.trim()) send(input.value, screenStream ? "screen" : "audio");
       voiceMode = false;
     };
     rec.onerror = function () { $(".mic").classList.remove("on"); rec = null; voiceMode = false; };
@@ -370,24 +370,28 @@
     speechSynthesis.speak(new SpeechSynthesisUtterance(plain));
   }
 
-  // Cast: show Akira what your camera sees
-  if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) $(".cam").hidden = true;
-  $(".cam").onclick = function () {
-    if (camStream) {
-      camStream.getTracks().forEach(function (t) { t.stop(); });
-      camStream = null; video.hidden = true; $(".cam").classList.remove("on");
-      return;
-    }
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false }).then(function (s) {
-      camStream = s; video.srcObject = s; video.hidden = false; video.play(); $(".cam").classList.add("on");
-    }).catch(function () { bubble("a", "<span class='think'>Camera access was blocked, so Cast can't see anything.</span>"); });
+  // Cast: share your screen. Each message you send carries a fresh frame of it.
+  if (!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia)) $(".scr").hidden = true;
+  function stopScreen() {
+    if (!screenStream) return;
+    screenStream.getTracks().forEach(function (t) { t.stop(); });
+    screenStream = null; video.hidden = true; $(".scr").classList.remove("on");
+    input.placeholder = "Ask Akira…";
+  }
+  $(".scr").onclick = function () {
+    if (screenStream) { stopScreen(); return; }
+    navigator.mediaDevices.getDisplayMedia({ video: true, audio: false }).then(function (s) {
+      screenStream = s; video.srcObject = s; video.hidden = false; video.play(); $(".scr").classList.add("on");
+      input.placeholder = "Ask about your screen…";
+      s.getVideoTracks()[0].addEventListener("ended", stopScreen);   // the browser's own "Stop sharing" button
+    }).catch(function () { bubble("a", "<span class='think'>Screen sharing was cancelled or blocked, so Cast can't see your screen.</span>"); });
   };
   function grabFrame() {
-    if (!camStream || !video.videoWidth) return null;
-    var c = document.createElement("canvas"), scale = Math.min(1, 1024 / video.videoWidth);
+    if (!screenStream || !video.videoWidth) return null;
+    var c = document.createElement("canvas"), scale = Math.min(1, 1600 / video.videoWidth);   // keep text sharp
     c.width = video.videoWidth * scale; c.height = video.videoHeight * scale;
     c.getContext("2d").drawImage(video, 0, 0, c.width, c.height);
-    return { data: c.toDataURL("image/jpeg", 0.8).split(",")[1], media_type: "image/jpeg" };
+    return { data: c.toDataURL("image/jpeg", 0.92).split(",")[1], media_type: "image/jpeg" };
   }
 
   function mount() { document.body.appendChild(host); if (ds.open === "true") open(); }

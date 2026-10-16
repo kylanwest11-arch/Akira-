@@ -51,7 +51,7 @@ LOOKUP = re.compile(r"^\s*(akira[, ]+)?(what|what's|show|find|when|where|who|tur
 class Request:
     text: str = ""
     images: list = field(default_factory=list)      # base64 or bytes, already checked by the caller
-    modality: str = "text"                           # text | audio | video
+    modality: str = "text"                           # text | audio | screen
     tier: str = "auto"                              # auto | 0 | 1 | 2 | a tier name
     family: str = "auto"                            # auto | core | arc | una | live | cast
     cloud_available: bool = True
@@ -74,8 +74,8 @@ def pick_family(req: Request, reasons):
     if req.family in brains.FAMILIES:
         reasons.append(f"family set by caller: {req.family}")
         return req.family
-    if req.modality == "video":
-        reasons.append("live camera + voice -> Cast")
+    if req.modality in ("screen", "video"):
+        reasons.append("shared screen + voice -> Cast")
         return "cast"
     if req.modality == "audio":
         reasons.append("live voice -> Live")

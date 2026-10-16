@@ -34,7 +34,7 @@ def test_rules_pick_the_brain(text, family):
 
 def test_modality_picks_live_and_cast():
     assert protocol.route(protocol.Request(text="hi", modality="audio")).brain.family == "live"
-    assert protocol.route(protocol.Request(text="what's this", modality="video")).brain.family == "cast"
+    assert protocol.route(protocol.Request(text="what's this", modality="screen")).brain.family == "cast"
 
 
 def test_simple_device_lookup_stays_local():
@@ -135,16 +135,64 @@ def test_live_pieces():
     assert word_error_rate("the cat sat", "the bat sat") == 1 / 3
 
 
-def test_cast_sees_an_image():
+def test_arc_vision_sees_an_image():
     import io
 
     import torch
     from PIL import Image
-    from akira.native.cast import Cast, CastNet
-    path = "/tmp/akira-test-cast.pt"
-    torch.save({"brain": "cast-lite", "model": CastNet((32, 64, 128, 256), 3).state_dict(), "state": {},
+    from akira.native.arc_vision import ArcVision, VisionNet
+    path = "/tmp/akira-test-vision.pt"
+    torch.save({"brain": "arc-vision-lite", "model": VisionNet((32, 64, 128, 256), 3).state_dict(), "state": {},
                 "classes": ["cat", "dog", "fox"]}, path)
     buf = io.BytesIO()
     Image.new("RGB", (120, 90), (200, 100, 50)).save(buf, format="JPEG")
-    seen = Cast(path).see(buf.getvalue(), k=2)
+    seen = ArcVision(path).see(buf.getvalue(), k=2)
     assert len(seen) == 2 and seen[0][0] in ("cat", "dog", "fox") and 0 <= seen[0][1] <= 1
+
+
+def _fake_screen():
+    from PIL import Image, ImageDraw, ImageFont
+    from akira.native.cast import system_fonts
+    font = ImageFont.truetype(next(f for f in system_fonts() if "DejaVuSans.ttf" in f or "Inter" in f), 18)
+    im = Image.new("RGB", (640, 300), (250, 250, 250))
+    d = ImageDraw.Draw(im)
+    rows = ["Inbox", "Thomas Reed: movies on Friday?", "Maya Chen: notes from the keyboard review"]
+    for i, row in enumerate(rows):
+        d.text((24, 30 + i * 60), row, font=font, fill=(20, 20, 20))
+    d.rectangle((24, 230, 140, 266), fill=(40, 90, 200))
+    d.text((44, 238), "Reply", font=font, fill=(255, 255, 255))
+    return im, rows + ["Reply"]
+
+
+def test_cast_finds_every_line_on_a_screen():
+    import numpy as np
+    from akira.native.cast import find_lines
+    im, rows = _fake_screen()
+    boxes = find_lines(np.asarray(im.convert("L")))
+    assert len(boxes) == len(rows)
+    assert [b[1] for b in boxes] == sorted(b[1] for b in boxes)
+
+
+def test_cast_reads_a_screen_end_to_end():
+    import io
+
+    import torch
+    from akira.native.cast import Cast, CastNet, SIZES
+    path = "/tmp/akira-test-cast.pt"
+    torch.save({"brain": "cast-lite", "model": CastNet(*SIZES["cast-lite"]).state_dict(), "state": {}}, path)
+    im, rows = _fake_screen()
+    buf = io.BytesIO()
+    im.save(buf, format="PNG")
+    out = Cast(path).read(buf.getvalue())   # untrained, so the text is noise; the pipeline must still run
+    assert isinstance(out, list) and all("box" in o and "text" in o for o in out)
+
+
+def test_cast_training_text_fits_a_strip():
+    import random
+
+    from akira.native.cast import MAX_WIDTH, synth_line, system_fonts
+    r = random.Random(0)
+    fonts = system_fonts()
+    for _ in range(30):
+        strip, shown = synth_line("A very long line of screen text that would never fit in one strip " * 3, r.choice(fonts), r)
+        assert strip.shape[0] == 32 and strip.shape[1] <= MAX_WIDTH and shown

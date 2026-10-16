@@ -1,8 +1,8 @@
-"""Download mini-ImageNet (100 everyday object categories) and shrink it to 64x64 for Cast.
+"""Download mini-ImageNet (100 everyday object categories) and shrink it to 64x64 for Arc's visual processing.
 
-    python3 scripts/prepare_cast.py
+    python3 scripts/prepare_arc_vision.py
 
-Writes data/cast/train.npz, val.npz (uint8 images + labels) and classes.json
+Writes data/arc_vision/train.npz, val.npz (uint8 images + labels) and classes.json
 (readable names). Each parquet shard is converted and deleted as it arrives.
 """
 import io
@@ -14,7 +14,7 @@ import numpy as np
 import pyarrow.parquet as pq
 from PIL import Image
 
-OUT = "data/cast"
+OUT = "data/arc_vision"
 BASE = "https://huggingface.co/api/datasets/timm/mini-imagenet/parquet/default"
 SIZE = 72          # stored a little larger than the 64 the model sees, for random crops
 os.makedirs(OUT, exist_ok=True)
@@ -53,7 +53,7 @@ meta = json.loads(pq.read_metadata(os.path.join(OUT, "val.parquet")).metadata[b"
     if os.path.exists(os.path.join(OUT, "val.parquet")) else None
 if meta and not os.path.exists(os.path.join(OUT, "classes.json")):
     wnids = meta["info"]["features"]["label"]["names"]
-    index = json.load(open(os.environ.get("IMAGENET_INDEX", "data/cast/imagenet_class_index.json")))
+    index = json.load(open(os.environ.get("IMAGENET_INDEX", "data/arc_vision/imagenet_class_index.json")))
     names = {wnid: name.replace("_", " ") for wnid, name in index.values()}
     json.dump([names.get(w, w) for w in wnids], open(os.path.join(OUT, "classes.json"), "w"), indent=0)
     os.rename(os.path.join(OUT, "val.parquet"), os.path.join(OUT, "validation_0.parquet"))

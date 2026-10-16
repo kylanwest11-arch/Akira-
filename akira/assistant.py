@@ -31,6 +31,7 @@ from .cac import CloudAccessCenter
 from .fhp import Listener
 from .lac import LocalAccessCenter
 from .native import arc as arc_mod
+from .native import arc_vision as vision_mod
 from .native import cast as cast_mod
 from .native import live as live_mod
 from .native.engine import NativeBrains
@@ -65,6 +66,7 @@ class Akira:
         self.native = NativeBrains(models_dir)
         self.router = Router.load_default(models_dir)
         self.arc = Latest(arc_mod.load_best, "arc", models_dir)
+        self.vision = Latest(vision_mod.load_best, "arc-vision", models_dir)
         self.cast = Latest(cast_mod.load_best, "cast", models_dir)
         self.live = Latest(live_mod.load_best, "live", models_dir)
         self.listeners = {}
@@ -86,7 +88,7 @@ class Akira:
             "cloud": self.cac.available,
             "router": {"trained": self.router is not None, "metrics": self.router.metrics if self.router else None},
             "native_brains": {**{b: self.native.get(b).info() for b in self.native.available()},
-                              **{m.info["brain"]: m.info for m in (self.arc.get(), self.cast.get(), self.live.get()) if m}},
+                              **{m.info["brain"]: m.info for m in (self.arc.get(), self.vision.get(), self.cast.get(), self.live.get()) if m}},
             "brains": [b.to_dict() for b in brains.BRAINS.values()],
         }
 
@@ -149,12 +151,29 @@ class Akira:
                 yield {"type": "done", "engine": f"native:{arc.brain}"}
                 return
 
-        # Cast looks at the camera frame (or a photo) with its own eyes when the cloud isn't there
-        if images and not cloud_ok:
+        # Cast reads the shared screen with Akira's own screen reader, before any brain answers
+        if modality == "screen" and images:
             cast = self.cast.get()
+            screen_text = None
             if cast is not None:
                 try:
-                    seen = cast.see(base64.b64decode(images[0]["data"]))
+                    lines = cast.read(base64.b64decode(images[0]["data"]))
+                except Exception:
+                    lines = []
+                screen_text = "\n".join(line["text"] for line in lines)
+                yield {"type": "tool", "name": "read_screen", "input": {"lines": len(lines)}, "where": "device"}
+                if screen_text:
+                    prefetched = {**prefetched, "text_read_from_screen": screen_text[:6000]}
+            if not cloud_ok:
+                yield from self._native_screen_answer(text, screen_text, brain, history, stop)
+                return
+
+        # Arc looks at a photo with its own eyes when the cloud isn't there
+        if images and not cloud_ok:
+            vision = self.vision.get()
+            if vision is not None:
+                try:
+                    seen = vision.see(base64.b64decode(images[0]["data"]))
                 except Exception:
                     seen = None
                 if seen:
@@ -164,7 +183,7 @@ class Akira:
                            f"I'm not sure. My best guess is **{best}** ({p:.0%}).") + (f" It could also be {others}." if others else "")
                     yield {"type": "tool", "name": "look", "input": {}, "where": "device"}
                     yield {"type": "text", "text": msg}
-                    yield {"type": "done", "engine": f"native:{cast.brain}"}
+                    yield {"type": "done", "engine": f"native:{vision.brain}"}
                     return
 
         if cloud_ok and route.placement in ("cloud", "both"):
@@ -197,6 +216,27 @@ class Akira:
         for piece in engine.stream_chat(convo, max_new_tokens=220, stop=stop):
             yield {"type": "text", "text": piece}
         yield {"type": "done", "engine": f"native:{engine.brain}"}
+
+    def _native_screen_answer(self, question, screen_text, brain, history, stop):
+        """Answer about the user's screen with no cloud: show what Cast read, then let Core answer from it."""
+        if screen_text is None:
+            yield {"type": "text", "text": "Cast's screen reader isn't trained yet, so I can't read your screen on this "
+                                           "device. Connect the cloud side, or try again once training finishes."}
+            yield {"type": "done", "engine": "none"}
+            return
+        if not screen_text.strip():
+            yield {"type": "text", "text": "I can see your screen but can't make out any text on it."}
+            yield {"type": "done", "engine": "native:cast"}
+            return
+        shown = [ln for ln in screen_text.splitlines() if len(ln.strip()) > 2][:15]
+        yield {"type": "text", "text": "**On your screen I can read:**\n\n" + "\n".join(f"> {ln}" for ln in shown) + "\n\n"}
+        engine = self.native.best_for("core", brain.rank)
+        if engine is not None and question.strip():
+            convo = [{"role": "system", "content": NATIVE_SYSTEM + "\nThe user is sharing their screen. Text on it:\n"
+                      + screen_text[:1500]}] + history[-4:] + [{"role": "user", "content": question}]
+            for piece in engine.stream_chat(convo, max_new_tokens=160, stop=stop):
+                yield {"type": "text", "text": piece}
+        yield {"type": "done", "engine": "native:cast" + (f"+{engine.brain}" if engine else "")}
 
     # --- on-device answers (LAC) ---------------------------------------------
     def local_answer(self, text, intents, prefetched):

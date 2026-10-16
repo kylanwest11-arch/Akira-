@@ -1,13 +1,15 @@
-"""Train Cast's image recogniser from scratch on mini-ImageNet (100 categories, 64x64).
+"""Train a Cast brain (screen reading) from scratch on synthetic screen text.
 
     python3 scripts/train_cast.py --brain cast-lite --minutes 240
 
-Resumable. Random crops, flips and colour jitter; label smoothing; one-cycle
-learning rate over the time budget. Measures accuracy on held-out images.
+Every batch is freshly rendered (new text, font, size and theme), so the model
+never sees the same line twice. Resumable. Measures the character error rate
+on a fixed set of held-out rendered lines at each checkpoint.
 """
 import argparse
 import json
 import os
+import random
 import sys
 import time
 
@@ -16,27 +18,30 @@ import torch
 import torch.nn.functional as F
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from akira.native.cast import MEAN, SIZES, STD, CastNet  # noqa: E402
+from akira.native.cast import (SIZES, CastNet, TextSource, batch_tensor, char_error_rate, encode,  # noqa: E402
+                               greedy_decode, synth_line, system_fonts)
 
 p = argparse.ArgumentParser()
 p.add_argument("--brain", default="cast-lite", choices=list(SIZES))
 p.add_argument("--minutes", type=float, required=True)
-p.add_argument("--batch", type=int, default=128)
-p.add_argument("--lr", type=float, default=2e-3)
+p.add_argument("--batch", type=int, default=48)
+p.add_argument("--lr", type=float, default=1e-3)
 p.add_argument("--save_every", type=float, default=15)
 p.add_argument("--models", default="models")
 args = p.parse_args()
 
-tr = np.load("data/cast/train.npz")
-va = np.load("data/cast/validation.npz")
-xtr = torch.from_numpy(tr["x"]).permute(0, 3, 1, 2).contiguous()   # uint8 N,3,72,72
-ytr = torch.from_numpy(tr["y"])
-xva = torch.from_numpy(va["x"]).permute(0, 3, 1, 2).contiguous()[:, :, 4:68, 4:68]
-yva = torch.from_numpy(va["y"])
-classes = json.load(open("data/cast/classes.json"))
-net = CastNet(SIZES[args.brain], len(classes)).to(memory_format=torch.channels_last)
-opt = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4, nesterov=True)
-state = {"step": 0, "seconds": 0.0, "images": 0, "acc": None, "acc5": None, "best": 0.0, "history": []}
+fonts = system_fonts()
+source = TextSource()
+held_out_fonts = fonts[::10]                               # every 10th font is never trained on
+train_fonts = [f for f in fonts if f not in held_out_fonts]
+vr = random.Random(12345)
+val = [synth_line(source.sample(vr), vr.choice(held_out_fonts), vr) for _ in range(400)]
+print(f"{len(train_fonts)} training fonts, {len(held_out_fonts)} held-out fonts, {len(source.lines):,} text lines", flush=True)
+
+widths, hidden = SIZES[args.brain]
+net = CastNet(widths, hidden)
+opt = torch.optim.AdamW(net.parameters(), lr=args.lr, weight_decay=0.01)
+state = {"step": 0, "seconds": 0.0, "lines": 0, "cer": None, "best": 9.9, "history": []}
 last = os.path.join(args.models, f"{args.brain}.last.pt")
 best = os.path.join(args.models, f"{args.brain}.pt")
 if os.path.exists(last):
@@ -45,42 +50,31 @@ if os.path.exists(last):
     opt.load_state_dict(ck["optimizer"])
     state = ck["state"]
     print(f"resuming {args.brain} at step {state['step']}", flush=True)
-print(f"{args.brain}: {sum(p_.numel() for p_ in net.parameters()) / 1e6:.1f}M parameters, "
-      f"{len(xtr):,} training images, {len(classes)} categories", flush=True)
-
-
-def augment(xb):
-    n = len(xb)
-    i, j = np.random.randint(0, 9, 2)
-    x = xb[:, :, i:i + 64, j:j + 64].float() / 255
-    flip = torch.rand(n) < 0.5
-    x[flip] = x[flip].flip(-1)
-    x = x * (0.8 + 0.4 * torch.rand(n, 1, 1, 1)) + 0.1 * (torch.rand(n, 3, 1, 1) - 0.5)   # brightness + tint
-    return ((x.clamp(0, 1) - MEAN) / STD).contiguous(memory_format=torch.channels_last)
+print(f"{args.brain}: {sum(p_.numel() for p_ in net.parameters()) / 1e6:.1f}M parameters", flush=True)
+rng = random.Random(state["step"])
 
 
 @torch.no_grad()
 def evaluate():
     net.eval()
-    hit1 = hit5 = 0
-    for k in range(0, len(xva), 256):
-        x = ((xva[k:k + 256].float() / 255 - MEAN) / STD).contiguous(memory_format=torch.channels_last)
-        with torch.autocast("cpu", dtype=torch.bfloat16):
-            top = net(x).float().topk(5, -1).indices
-        y = yva[k:k + 256]
-        hit1 += (top[:, 0] == y).sum().item()
-        hit5 += (top == y[:, None]).any(-1).sum().item()
+    errs, chars, examples = 0.0, 0, []
+    for k in range(0, len(val), 32):
+        chunk = val[k:k + 32]
+        x, w = batch_tensor([s for s, _ in chunk])
+        logp, n = net(x, w)
+        for i, (_, text) in enumerate(chunk):
+            hyp = greedy_decode(logp[i], int(n[i]))
+            errs += char_error_rate(text, hyp) * len(text)
+            chars += len(text)
+            if len(examples) < 3:
+                examples.append({"shown": text, "read": hyp})
     net.train()
-    return hit1 / len(xva), hit5 / len(xva)
+    return errs / chars, examples
 
 
-def save(acc):
-    torch.save({"brain": args.brain, "model": net.state_dict(), "optimizer": opt.state_dict(), "state": state,
-                "classes": classes}, last + ".tmp")
+def save():
+    torch.save({"brain": args.brain, "model": net.state_dict(), "optimizer": opt.state_dict(), "state": state}, last + ".tmp")
     os.replace(last + ".tmp", last)
-    if acc >= state["best"]:
-        state["best"] = acc
-        torch.save({"brain": args.brain, "model": net.state_dict(), "state": state, "classes": classes}, best)
 
 
 t0 = time.time() - state["seconds"]
@@ -92,31 +86,38 @@ while True:
     done = elapsed >= total
     if elapsed >= next_save or done:
         state["seconds"] = elapsed
-        acc, acc5 = evaluate()
-        state["acc"], state["acc5"] = round(acc, 4), round(acc5, 4)
-        state["history"].append({"step": state["step"], "minutes": round(elapsed / 60, 1), "acc": state["acc"], "acc5": state["acc5"]})
-        print(f"checkpoint | accuracy {acc:.1%} | top-5 {acc5:.1%} | {state['images'] / len(xtr):.1f} epochs", flush=True)
-        save(acc)
+        cer, ex = evaluate()
+        state["cer"] = round(cer, 4)
+        state["history"].append({"step": state["step"], "minutes": round(elapsed / 60, 1), "cer": state["cer"]})
+        print(f"checkpoint | character error rate {cer:.1%} | {ex}", flush=True)
+        save()
+        if cer < state["best"]:
+            state["best"] = cer
+            torch.save({"brain": args.brain, "model": net.state_dict(), "state": state}, best)
         json.dump(state["history"], open(os.path.join(args.models, f"{args.brain}.log.json"), "w"))
         next_save = elapsed + args.save_every * 60
         if done:
             break
     progress = elapsed / total
-    # one-cycle: warm up for the first 5% of the time, then cosine down
-    lr = args.lr * (progress / 0.05 if progress < 0.05 else 0.5 * (1 + np.cos(np.pi * (progress - 0.05) / 0.95)))
+    lr = args.lr * min(1.0, (state["step"] + 1) / 500) * (0.05 + 0.95 * 0.5 * (1 + np.cos(np.pi * progress)))
     for g in opt.param_groups:
-        g["lr"] = max(lr, 1e-5)
-    ix = torch.randint(0, len(xtr), (args.batch,))
-    x, y = augment(xtr[ix]), ytr[ix]
+        g["lr"] = lr
+    lines = [synth_line(source.sample(rng), rng.choice(train_fonts), rng) for _ in range(args.batch)]
+    x, w = batch_tensor([s for s, _ in lines])
+    ys = [torch.tensor(encode(t) or [1]) for _, t in lines]
     with torch.autocast("cpu", dtype=torch.bfloat16):
-        loss = F.cross_entropy(net(x).float(), y, label_smoothing=0.1)
+        logp, n = net(x, w)
+    loss = F.ctc_loss(logp.transpose(0, 1), torch.cat(ys), n, torch.tensor([len(y) for y in ys]),
+                      blank=0, zero_infinity=True)
     opt.zero_grad(set_to_none=True)
     loss.backward()
+    torch.nn.utils.clip_grad_norm_(net.parameters(), 5.0)
     opt.step()
     state["step"] += 1
-    state["images"] += args.batch
+    state["lines"] += len(lines)
     losses.append(loss.item())
     if state["step"] % 100 == 0:
-        print(f"step {state['step']:6d} | loss {sum(losses) / len(losses):.3f} | {elapsed / 60:.1f}/{args.minutes:g} min", flush=True)
+        print(f"step {state['step']:6d} | ctc {sum(losses) / len(losses):.3f} | {state['lines'] / 1e6:.2f}M lines | "
+              f"{elapsed / 60:.1f}/{args.minutes:g} min", flush=True)
         losses = []
-print(f"done: {args.brain}, best accuracy {state['best']:.1%}", flush=True)
+print(f"done: {args.brain}, best character error rate {state['best']:.1%}", flush=True)
