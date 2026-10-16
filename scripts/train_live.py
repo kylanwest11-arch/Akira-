@@ -18,6 +18,7 @@ import torch
 import torch.nn.functional as F
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from akira.native.accel import DEVICE, autocast, describe  # noqa: E402
 from akira.native.live import N_MELS, SIZES, LiveNet, encode_text, greedy_decode, word_error_rate  # noqa: E402
 
 p = argparse.ArgumentParser()
@@ -44,7 +45,7 @@ val_idx = random.sample(val_idx, 200)
 print(f"{len(train_idx):,} training utterances ({sum(i['frames'] for i in train_idx) / 360000:.1f} h)", flush=True)
 
 d, layers, heads = SIZES[args.brain]
-net = LiveNet(d, layers, heads)
+net = LiveNet(d, layers, heads).to(DEVICE)
 opt = torch.optim.AdamW(net.parameters(), lr=args.lr, betas=(0.9, 0.98), weight_decay=0.01)
 state = {"step": 0, "seconds": 0.0, "seconds_of_audio": 0.0, "history": [], "wer": None, "best_wer": 9.9}
 last = os.path.join(args.models, f"{args.brain}.last.pt")
@@ -55,7 +56,7 @@ if os.path.exists(last):
     opt.load_state_dict(ck["optimizer"])
     state = ck["state"]
     print(f"resuming {args.brain} at step {state['step']}", flush=True)
-print(f"{args.brain}: {sum(p_.numel() for p_ in net.parameters()) / 1e6:.1f}M parameters", flush=True)
+print(f"{args.brain}: {sum(p_.numel() for p_ in net.parameters()) / 1e6:.1f}M parameters, {describe()}", flush=True)
 
 order = sorted(range(len(train_idx)), key=lambda i: train_idx[i]["frames"])
 
@@ -72,9 +73,9 @@ def make_batch(items, feats, augment):
                 t = random.randint(0, min(40, len(x) // 5))
                 t0 = random.randint(0, max(0, len(x) - t))
                 x[t0:t0 + t] = 0
-    lengths = torch.tensor([len(x) for x in xs])
-    x = torch.nn.utils.rnn.pad_sequence(xs, batch_first=True)
-    ys = [torch.tensor(encode_text(it["text"])) for it in items]
+    lengths = torch.tensor([len(x) for x in xs]).to(DEVICE)
+    x = torch.nn.utils.rnn.pad_sequence(xs, batch_first=True).to(DEVICE)
+    ys = [torch.tensor(encode_text(it["text"]), device=DEVICE) for it in items]
     return x, lengths, ys
 
 
@@ -143,17 +144,17 @@ while True:
         g["lr"] = lr
     items = sample_batch()
     x, lengths, ys = make_batch(items, train_feats, True)
-    with torch.autocast("cpu", dtype=torch.bfloat16):
+    with autocast():
         logp, n = net(x, lengths)
     targets = torch.cat(ys)
-    loss = F.ctc_loss(logp.transpose(0, 1), targets, n, torch.tensor([len(y) for y in ys]),
+    loss = F.ctc_loss(logp.transpose(0, 1), targets, n, torch.tensor([len(y) for y in ys], device=DEVICE),
                       blank=0, zero_infinity=True)
     opt.zero_grad(set_to_none=True)
     loss.backward()
     torch.nn.utils.clip_grad_norm_(net.parameters(), 1.0)
     opt.step()
     state["step"] += 1
-    state["seconds_of_audio"] += float(lengths.sum()) / 100
+    state["seconds_of_audio"] += float(lengths.sum().item()) / 100
     losses.append(loss.item())
     if state["step"] % 100 == 0:
         print(f"step {state['step']:6d} | ctc {sum(losses) / len(losses):.3f} | "

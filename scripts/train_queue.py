@@ -11,6 +11,7 @@ A job that finishes writes models/jobs/<name>.done; one that fails writes
 <name>.failed (delete it to retry). Every trainer resumes from its last
 checkpoint, so killing and restarting the queue loses at most a few minutes.
 """
+import argparse
 import json
 import os
 import subprocess
@@ -21,6 +22,11 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 QUEUE = os.path.join(ROOT, "models", "queue.json")
 MARKS = os.path.join(ROOT, "models", "jobs")
 os.makedirs(MARKS, exist_ok=True)
+ap = argparse.ArgumentParser()
+ap.add_argument("--queue", default=QUEUE)
+ap.add_argument("--once", action="store_true", help="exit when every job is done instead of waiting for more")
+opts = ap.parse_args()
+QUEUE = opts.queue
 
 
 def log(msg):
@@ -43,6 +49,9 @@ def next_job():
 while True:
     job = next_job()
     if job is None:
+        if opts.once:
+            log("all jobs done")
+            break
         time.sleep(60)
         continue
     log(f"start {job['name']}: {job['cmd']}")

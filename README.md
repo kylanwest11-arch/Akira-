@@ -67,8 +67,17 @@ In a Python app, use the `Akira` class directly. Connect it to the real device b
 
 ## Train the native brains
 
+**Fastest: a free GPU.** Open `notebooks/train_on_colab.ipynb` in Google Colab
+(colab.research.google.com → File → Open notebook → GitHub → `kylanwest11-arch/Akira-`), switch the
+runtime to a T4 GPU, and run the cells. Checkpoints are saved to your Google Drive, and every brain resumes
+after a disconnect.
+
+**On any machine:**
+
+
 ```bash
-python3 scripts/build_corpus.py         # Core: chat + knowledge corpus and tokenizer -> data/core
+python3 scripts/download_data.py        # training data from Hugging Face (--brains core,una,... for a subset)
+python3 scripts/build_corpus.py         # Core: chat + knowledge corpus -> data/core (reuses release/tokenizer.json)
 python3 scripts/build_code_corpus.py    # Una: code corpus with the same tokenizer
 python3 scripts/prepare_live.py         # Live: LibriSpeech -> log-mel features (download parquet into data/live/raw)
 python3 scripts/prepare_arc_vision.py   # Arc's recogniser: mini-ImageNet -> 72x72 images

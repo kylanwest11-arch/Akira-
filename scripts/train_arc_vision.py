@@ -16,6 +16,7 @@ import torch
 import torch.nn.functional as F
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from akira.native.accel import DEVICE, autocast, describe  # noqa: E402
 from akira.native.arc_vision import MEAN, SIZES, STD, VisionNet  # noqa: E402
 
 p = argparse.ArgumentParser()
@@ -34,7 +35,7 @@ ytr = torch.from_numpy(tr["y"])
 xva = torch.from_numpy(va["x"]).permute(0, 3, 1, 2).contiguous()[:, :, 4:68, 4:68]
 yva = torch.from_numpy(va["y"])
 classes = json.load(open("data/arc_vision/classes.json"))
-net = VisionNet(SIZES[args.brain], len(classes)).to(memory_format=torch.channels_last)
+net = VisionNet(SIZES[args.brain], len(classes)).to(DEVICE, memory_format=torch.channels_last)
 opt = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4, nesterov=True)
 state = {"step": 0, "seconds": 0.0, "images": 0, "acc": None, "acc5": None, "best": 0.0, "history": []}
 last = os.path.join(args.models, f"{args.brain}.last.pt")
@@ -46,7 +47,7 @@ if os.path.exists(last):
     state = ck["state"]
     print(f"resuming {args.brain} at step {state['step']}", flush=True)
 print(f"{args.brain}: {sum(p_.numel() for p_ in net.parameters()) / 1e6:.1f}M parameters, "
-      f"{len(xtr):,} training images, {len(classes)} categories", flush=True)
+      f"{len(xtr):,} training images, {len(classes)} categories, {describe()}", flush=True)
 
 
 def augment(xb):
@@ -64,9 +65,9 @@ def evaluate():
     net.eval()
     hit1 = hit5 = 0
     for k in range(0, len(xva), 256):
-        x = ((xva[k:k + 256].float() / 255 - MEAN) / STD).contiguous(memory_format=torch.channels_last)
-        with torch.autocast("cpu", dtype=torch.bfloat16):
-            top = net(x).float().topk(5, -1).indices
+        x = ((xva[k:k + 256].float() / 255 - MEAN) / STD).contiguous(memory_format=torch.channels_last).to(DEVICE)
+        with autocast():
+            top = net(x).float().topk(5, -1).indices.cpu()
         y = yva[k:k + 256]
         hit1 += (top[:, 0] == y).sum().item()
         hit5 += (top == y[:, None]).any(-1).sum().item()
@@ -107,8 +108,8 @@ while True:
     for g in opt.param_groups:
         g["lr"] = max(lr, 1e-5)
     ix = torch.randint(0, len(xtr), (args.batch,))
-    x, y = augment(xtr[ix]), ytr[ix]
-    with torch.autocast("cpu", dtype=torch.bfloat16):
+    x, y = augment(xtr[ix]).to(DEVICE), ytr[ix].to(DEVICE)
+    with autocast():
         loss = F.cross_entropy(net(x).float(), y, label_smoothing=0.1)
     opt.zero_grad(set_to_none=True)
     loss.backward()

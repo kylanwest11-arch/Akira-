@@ -27,6 +27,8 @@ p.add_argument("--raw", default="data/raw")
 p.add_argument("--out", default="data/core")
 p.add_argument("--vocab", type=int, default=8192)
 p.add_argument("--max_chat_chars", type=int, default=2400, help="skip longer conversations; small brains learn short ones better")
+p.add_argument("--tokenizer", default="release/tokenizer.json",
+               help="reuse this tokenizer if it exists, so new brains match the ones already trained")
 args = p.parse_args()
 random.seed(0)
 os.makedirs(args.out, exist_ok=True)
@@ -96,7 +98,9 @@ def knowledge():
         lead = r["text"].strip().split("\n\n")[0].strip()   # the lead paragraph carries the key facts
         if 80 < len(lead) < 2000:
             docs.append(f"{r['title']}\n{lead}")
-    stories_path = "/home/user/mini-gpt/data/tinystories/train.txt"
+    stories_path = os.path.join(args.raw, "tinystories_train.txt")
+    if not os.path.exists(stories_path):                    # where the first experiments kept it
+        stories_path = "/home/user/mini-gpt/data/tinystories/train.txt"
     if os.path.exists(stories_path):
         stories = [s.strip() for s in open(stories_path, encoding="utf-8").read().split(EOT) if s.strip()][:-1]
         docs += stories[:60_000]
@@ -114,14 +118,20 @@ know_texts = knowledge()
 random.shuffle(know_texts)
 print(f"{len(know_texts):,} knowledge documents", flush=True)
 
-print("training tokenizer...", flush=True)
-tok = Tokenizer(models.BPE())
-tok.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=False)
-tok.decoder = decoders.ByteLevel()
-trainer = trainers.BpeTrainer(vocab_size=args.vocab, special_tokens=SPECIAL_TOKENS,
-                              initial_alphabet=pre_tokenizers.ByteLevel.alphabet())
-sample = random.sample(chat_texts, min(80_000, len(chat_texts))) + random.sample(know_texts, min(60_000, len(know_texts)))
-tok.train_from_iterator(sample, trainer=trainer)
+if os.path.exists(args.tokenizer):
+    print(f"reusing tokenizer {args.tokenizer}", flush=True)
+    tok = Tokenizer.from_file(args.tokenizer)
+else:
+    print("training tokenizer...", flush=True)
+    tok = None
+if tok is None:
+    tok = Tokenizer(models.BPE())
+    tok.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=False)
+    tok.decoder = decoders.ByteLevel()
+    trainer = trainers.BpeTrainer(vocab_size=args.vocab, special_tokens=SPECIAL_TOKENS,
+                                  initial_alphabet=pre_tokenizers.ByteLevel.alphabet())
+    sample = random.sample(chat_texts, min(80_000, len(chat_texts))) + random.sample(know_texts, min(60_000, len(know_texts)))
+    tok.train_from_iterator(sample, trainer=trainer)
 tok.save(os.path.join(args.out, "tokenizer.json"))
 eot = tok.token_to_id(EOT)
 

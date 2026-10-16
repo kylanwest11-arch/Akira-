@@ -18,6 +18,7 @@ import torch
 import torch.nn.functional as F
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from akira.native.accel import DEVICE, autocast, describe  # noqa: E402
 from akira.native.cast import (SIZES, CastNet, TextSource, batch_tensor, char_error_rate, encode,  # noqa: E402
                                greedy_decode, synth_line, system_fonts)
 
@@ -39,7 +40,7 @@ val = [synth_line(source.sample(vr), vr.choice(held_out_fonts), vr) for _ in ran
 print(f"{len(train_fonts)} training fonts, {len(held_out_fonts)} held-out fonts, {len(source.lines):,} text lines", flush=True)
 
 widths, hidden = SIZES[args.brain]
-net = CastNet(widths, hidden)
+net = CastNet(widths, hidden).to(DEVICE)
 opt = torch.optim.AdamW(net.parameters(), lr=args.lr, weight_decay=0.01)
 state = {"step": 0, "seconds": 0.0, "lines": 0, "cer": None, "best": 9.9, "history": []}
 last = os.path.join(args.models, f"{args.brain}.last.pt")
@@ -50,7 +51,7 @@ if os.path.exists(last):
     opt.load_state_dict(ck["optimizer"])
     state = ck["state"]
     print(f"resuming {args.brain} at step {state['step']}", flush=True)
-print(f"{args.brain}: {sum(p_.numel() for p_ in net.parameters()) / 1e6:.1f}M parameters", flush=True)
+print(f"{args.brain}: {sum(p_.numel() for p_ in net.parameters()) / 1e6:.1f}M parameters, {describe()}", flush=True)
 rng = random.Random(state["step"])
 
 
@@ -61,7 +62,7 @@ def evaluate():
     for k in range(0, len(val), 32):
         chunk = val[k:k + 32]
         x, w = batch_tensor([s for s, _ in chunk])
-        logp, n = net(x, w)
+        logp, n = net(x.to(DEVICE), w.to(DEVICE))
         for i, (_, text) in enumerate(chunk):
             hyp = greedy_decode(logp[i], int(n[i]))
             errs += char_error_rate(text, hyp) * len(text)
@@ -104,10 +105,10 @@ while True:
         g["lr"] = lr
     lines = [synth_line(source.sample(rng), rng.choice(train_fonts), rng) for _ in range(args.batch)]
     x, w = batch_tensor([s for s, _ in lines])
-    ys = [torch.tensor(encode(t) or [1]) for _, t in lines]
-    with torch.autocast("cpu", dtype=torch.bfloat16):
-        logp, n = net(x, w)
-    loss = F.ctc_loss(logp.transpose(0, 1), torch.cat(ys), n, torch.tensor([len(y) for y in ys]),
+    ys = [torch.tensor(encode(t) or [1], device=DEVICE) for _, t in lines]
+    with autocast():
+        logp, n = net(x.to(DEVICE), w.to(DEVICE))
+    loss = F.ctc_loss(logp.transpose(0, 1), torch.cat(ys), n, torch.tensor([len(y) for y in ys], device=DEVICE),
                       blank=0, zero_infinity=True)
     opt.zero_grad(set_to_none=True)
     loss.backward()

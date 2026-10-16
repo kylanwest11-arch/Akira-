@@ -22,6 +22,7 @@ import torch.nn.functional as F
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from akira import protocol  # noqa: E402
+from akira.native.accel import DEVICE, describe  # noqa: E402
 from akira.native.router import FAMILIES, INTENTS, MAX_LEN, RouterNet  # noqa: E402
 
 p = argparse.ArgumentParser()
@@ -210,13 +211,13 @@ def tensors(rows):
     fam = torch.tensor([FAMILIES.index(r["family"]) for r in rows])
     rank = torch.tensor([r["rank"] for r in rows])
     intents = torch.tensor([[float(i in r["intents"]) for i in INTENTS] for r in rows])
-    return ids, mask, fam, rank, intents
+    return ids.to(DEVICE), mask.to(DEVICE), fam.to(DEVICE), rank.to(DEVICE), intents.to(DEVICE)
 
 
 dims = {"d": 192, "layers": 3, "heads": 4}
-net = RouterNet(tok.get_vocab_size(), **dims)
+net = RouterNet(tok.get_vocab_size(), **dims).to(DEVICE)
 opt = torch.optim.AdamW(net.parameters(), lr=1e-3, weight_decay=0.01)
-print(f"router: {sum(p_.numel() for p_ in net.parameters()) / 1e6:.2f}M parameters", flush=True)
+print(f"router: {sum(p_.numel() for p_ in net.parameters()) / 1e6:.2f}M parameters, {describe()}", flush=True)
 
 
 @torch.no_grad()

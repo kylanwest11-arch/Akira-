@@ -23,6 +23,7 @@ import time
 import numpy as np
 import torch
 
+from .accel import DEVICE, autocast, describe
 from .model import GPT, Config
 
 SIZES = {
@@ -72,7 +73,7 @@ L, H, E, peak_lr = SIZES[args.brain]
 from tokenizers import Tokenizer  # noqa: E402
 cfg = Config(vocab_size=Tokenizer.from_str(tokenizer).get_vocab_size(), block_size=args.block,
              n_layer=L, n_head=H, n_embd=E, dropout=0.0)
-model = GPT(cfg)
+model = GPT(cfg).to(DEVICE)
 decay = [p_ for n, p_ in model.named_parameters() if p_.dim() >= 2]
 no_decay = [p_ for n, p_ in model.named_parameters() if p_.dim() < 2]
 opt = torch.optim.AdamW([{"params": decay, "weight_decay": 0.1}, {"params": no_decay, "weight_decay": 0.0}],
@@ -92,7 +93,7 @@ elif args.init:
     model.load_state_dict(ck["model"])
     state["init"] = args.init
     print(f"{args.brain} starts from {args.init}", flush=True)
-print(f"{args.brain}: {model.num_params() / 1e6:.1f}M parameters, {args.minutes:g} min budget, mix {mix}", flush=True)
+print(f"{args.brain}: {model.num_params() / 1e6:.1f}M parameters, {args.minutes:g} min budget, mix {mix}, {describe()}", flush=True)
 
 total = args.minutes * 60
 
@@ -102,7 +103,7 @@ def batch(source, split):
     ix = np.random.randint(0, len(d) - args.block - 1, size=args.batch)
     x = np.stack([d[i:i + args.block] for i in ix]).astype(np.int64)
     y = np.stack([d[i + 1:i + args.block + 1] for i in ix]).astype(np.int64)
-    return torch.from_numpy(x), torch.from_numpy(y)
+    return torch.from_numpy(x).to(DEVICE), torch.from_numpy(y).to(DEVICE)
 
 
 @torch.no_grad()
@@ -112,7 +113,7 @@ def evaluate(n=12):
     for source in sources:
         losses = []
         for _ in range(n):
-            with torch.autocast("cpu", dtype=torch.bfloat16):
+            with autocast():
                 losses.append(model(*batch(source, "val"))[1].item())
         out[source] = sum(losses) / n
     model.train()
@@ -167,7 +168,7 @@ while True:
     for g in opt.param_groups:
         g["lr"] = lr_at(progress)
     x, y = batch(pick_source(mix if progress < 0.85 else final_mix), "train")
-    with torch.autocast("cpu", dtype=torch.bfloat16):
+    with autocast():
         _, loss = model(x, y)
     opt.zero_grad(set_to_none=True)
     loss.backward()

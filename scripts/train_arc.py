@@ -18,6 +18,7 @@ import torch
 import torch.nn.functional as F
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from akira.native.accel import DEVICE, autocast, describe  # noqa: E402
 from akira.native.arc import CLASSES, SIZES, Diffusion, UNet, load_cifar  # noqa: E402
 
 p = argparse.ArgumentParser()
@@ -32,7 +33,7 @@ args = p.parse_args()
 x_all, y_all = load_cifar("data/arc/train.parquet")
 data = torch.from_numpy(x_all).permute(0, 3, 1, 2).contiguous()   # uint8 N,3,32,32
 labels = torch.from_numpy(y_all)
-model = UNet(base=SIZES[args.brain])
+model = UNet(base=SIZES[args.brain]).to(DEVICE)
 ema = copy.deepcopy(model).eval()
 opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=0.0)
 diff = Diffusion()
@@ -47,7 +48,7 @@ if os.path.exists(last):
     state = ck["state"]
     print(f"resuming {args.brain} at step {state['step']}", flush=True)
 n_params = sum(p_.numel() for p_ in model.parameters())
-print(f"{args.brain}: {n_params / 1e6:.1f}M parameters, {len(data):,} images, {args.minutes:g} min budget", flush=True)
+print(f"{args.brain}: {n_params / 1e6:.1f}M parameters, {len(data):,} images, {args.minutes:g} min budget, {describe()}", flush=True)
 
 
 def save():
@@ -72,17 +73,18 @@ while True:
     if elapsed >= args.minutes * 60:
         break
     ix = torch.randint(0, len(data), (args.batch,))
-    x0 = data[ix].float() / 127.5 - 1
-    flip = torch.rand(args.batch) < 0.5
+    x0 = (data[ix].float() / 127.5 - 1).to(DEVICE)
+    flip = (torch.rand(args.batch) < 0.5).to(DEVICE)
     x0[flip] = x0[flip].flip(-1)
     y = labels[ix].clone()
     y[torch.rand(args.batch) < 0.1] = len(CLASSES)        # learn the unguided case too
-    t = torch.randint(0, diff.T, (args.batch,))
+    y = y.to(DEVICE)
+    t = torch.randint(0, diff.T, (args.batch,)).to(DEVICE)
     noise = torch.randn_like(x0)
     lr = args.lr * min(1.0, (state["step"] + 1) / 500)
     for g in opt.param_groups:
         g["lr"] = lr
-    with torch.autocast("cpu", dtype=torch.bfloat16):
+    with autocast():
         pred = model(diff.noisy(x0, t, noise), t, y)
     loss = F.mse_loss(pred.float(), noise)
     opt.zero_grad(set_to_none=True)

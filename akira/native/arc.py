@@ -148,21 +148,22 @@ class Diffusion:
     def sample(self, model, labels, steps=50, guidance=3.0, seed=None, progress=None):
         g = torch.Generator().manual_seed(seed) if seed is not None else None
         n = len(labels)
-        x = torch.randn(n, 3, 32, 32, generator=g)
-        y = torch.tensor(labels)
+        dev = next(model.parameters()).device
+        x = torch.randn(n, 3, 32, 32, generator=g).to(dev)
+        y = torch.tensor(labels, device=dev)
         null = torch.full_like(y, len(CLASSES))
         ts = torch.linspace(self.T - 1, 0, steps).long()
         for i, t in enumerate(ts):
-            tt = t.repeat(n)
+            tt = t.repeat(n).to(dev)
             eps_c, eps_u = model(torch.cat([x, x]), torch.cat([tt, tt]), torch.cat([y, null])).chunk(2)
             eps = eps_u + guidance * (eps_c - eps_u)
-            a = self.abar[t]
+            a = self.abar[t].to(dev)
             x0 = ((x - (1 - a).sqrt() * eps) / a.sqrt()).clamp(-1, 1)
-            a_prev = self.abar[ts[i + 1]] if i + 1 < len(ts) else torch.tensor(1.0)
+            a_prev = (self.abar[ts[i + 1]] if i + 1 < len(ts) else torch.tensor(1.0)).to(dev)
             x = a_prev.sqrt() * x0 + (1 - a_prev).sqrt() * eps
             if progress:
                 progress(i + 1, steps)
-        return x
+        return x.cpu()
 
 
 class Arc:
