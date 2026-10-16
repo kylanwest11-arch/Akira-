@@ -73,7 +73,7 @@ python3 scripts/prepare_live.py         # Live: LibriSpeech -> log-mel features 
 python3 scripts/prepare_cast.py         # Cast: mini-ImageNet -> 72x72 images
 # Arc reads CIFAR-10 from data/arc/train.parquet
 
-nohup python3 scripts/train_queue.py > models/queue.log 2>&1 &
+scripts/start_all.sh                    # training queue + API server; run it again after any restart
 ```
 
 The queue runs the jobs in `models/queue.json` one at a time; edit that file to add, remove or reorder
