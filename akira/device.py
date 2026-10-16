@@ -11,7 +11,12 @@ from .relations import RelationGraph
 
 
 class DeviceData:
-    """Override these in your app. Each returns plain dicts."""
+    """Override these in your app. Each returns plain dicts.
+
+    The base class has no data: that is the right choice for a public website,
+    where Akira's server can't see a visitor's messages, calendar or files.
+    """
+    personal = False       # True when messages, contacts, calendar, files and photos are real
 
     def messages(self): return []
     def contacts(self): return []
@@ -24,6 +29,8 @@ class DeviceData:
 
 
 class DemoDevice(DeviceData):
+    personal = True
+
     def __init__(self, now=None):
         self.now = now or datetime.now()
         d = lambda days, h=12, m=0: (self.now - timedelta(days=days)).replace(hour=h, minute=m, second=0, microsecond=0)

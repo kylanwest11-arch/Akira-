@@ -196,3 +196,29 @@ def test_cast_training_text_fits_a_strip():
     for _ in range(30):
         strip, shown = synth_line("A very long line of screen text that would never fit in one strip " * 3, r.choice(fonts), r)
         assert strip.shape[0] == 32 and strip.shape[1] <= MAX_WIDTH and shown
+
+
+def test_website_mode_has_no_personal_tools():
+    from akira.device import DeviceData
+    names = {t["name"] for t in LocalAccessCenter(DeviceData()).tool_definitions()}
+    assert names == {"calculator", "clock"}
+    assert "search_messages" in {t["name"] for t in LocalAccessCenter().tool_definitions()}
+
+
+def test_rate_limit():
+    from fastapi.testclient import TestClient
+    from akira import server
+    server.LIMITS["/v1/listen"] = 3
+    c = TestClient(server.app)
+    codes = [c.post("/v1/listen", json={"session": "rate1", "text": "hi there"},
+                    headers={"x-forwarded-for": "203.0.113.9"}).status_code for _ in range(5)]
+    assert codes == [200, 200, 200, 429, 429]
+    assert c.post("/v1/listen", json={"session": "rate2", "text": "hi"},
+                  headers={"x-forwarded-for": "203.0.113.10"}).status_code == 200
+
+
+def test_app_is_served_pointed_at_this_server():
+    from fastapi.testclient import TestClient
+    from akira import server
+    r = TestClient(server.app).get("/app")
+    assert r.status_code == 200 and 'name="akira-server" content="http://testserver"' in r.text

@@ -1,0 +1,7 @@
+numpy
+tokenizers
+fastapi
+uvicorn
+anthropic
+pillow
+scipy

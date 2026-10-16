@@ -162,10 +162,13 @@ class LocalAccessCenter:
         ("clock", "Current local date and time on the device.", {}, []),
     ]
 
+    ALWAYS_AVAILABLE = {"calculator", "clock"}
+
     def tool_definitions(self):
+        personal = getattr(self.device, "personal", True)
         return [{"name": n, "description": d, "eager_input_streaming": True,
                  "input_schema": {"type": "object", "properties": p, "required": r}}
-                for n, d, p, r in self.TOOL_SPECS]
+                for n, d, p, r in self.TOOL_SPECS if personal or n in self.ALWAYS_AVAILABLE]
 
     def run_tool(self, name, args):
         spec = next((s for s in self.TOOL_SPECS if s[0] == name), None)

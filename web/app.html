@@ -1,0 +1,2068 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Akira</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<!-- Your Akira server's address, e.g. https://akira.yoursite.com . Visitors can also set it in Settings → Intelligence. -->
+<meta name="akira-server" content="">
+<style>
+/* Layout: floating Liquid Glass sidebar + toolbar over a content layer; Workspace adds a context inspector. Akira is green, Workspace is indigo. */
+:root{
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --gray:#8E8E93; --gray2:#AEAEB2; --gray3:#C7C7CC; --gray4:#D1D1D6; --gray5:#E5E5EA; --gray6:#F2F2F7;
+  --bg: var(--gray6);
+  --surface:#FFFFFF;
+  --label:#1C1C1E;
+  --label-2:rgba(60,60,67,.66);
+  --label-3:rgba(60,60,67,.42);
+  --separator:rgba(60,60,67,.16);
+  --fill:rgba(120,120,128,.12);
+  --fill-strong:rgba(120,120,128,.2);
+  --green:#248A3D;  --green-soft:rgba(52,199,89,.14);
+  --indigo:#4B49C7; --indigo-soft:rgba(88,86,214,.13);
+  --orange:#C55300; --orange-soft:rgba(255,149,0,.16);
+  --red:#D70015; --red-soft:rgba(255,59,48,.12);
+  --glass:rgba(255,255,255,.62);
+  --glass-edge:rgba(255,255,255,.75);
+  --glass-shadow:0 8px 30px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+  --dim:rgba(0,0,0,.28);
+  --ambient-a:rgba(52,199,89,.10);
+  --ambient-b:rgba(88,86,214,.08);
+  --tint: var(--green); --tint-soft: var(--green-soft);
+  --bg-work:#EEEEF4; --grid-dot:rgba(88,86,214,.13);
+  --r-lg:22px; --r-md:14px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --gray:#8E8E93; --gray2:#636366; --gray3:#48484A; --gray4:#3A3A3C; --gray5:#2C2C2E; --gray6:#1C1C1E;
+  --bg:#000000; --surface:#1C1C1E;
+  --label:#F5F5F7; --label-2:rgba(235,235,245,.64); --label-3:rgba(235,235,245,.38);
+  --separator:rgba(84,84,88,.6); --fill:rgba(118,118,128,.24); --fill-strong:rgba(118,118,128,.34);
+  --green:#30D158; --green-soft:rgba(48,209,88,.16);
+  --indigo:#7D7AFF; --indigo-soft:rgba(94,92,230,.22);
+  --orange:#FF9F0A; --orange-soft:rgba(255,159,10,.16); --red:#FF453A; --red-soft:rgba(255,69,58,.16);
+  --glass:rgba(38,38,42,.58); --glass-edge:rgba(255,255,255,.10);
+  --glass-shadow:0 10px 34px rgba(0,0,0,.5), 0 1px 2px rgba(0,0,0,.4);
+  --dim:rgba(0,0,0,.55); --ambient-a:rgba(48,209,88,.09); --ambient-b:rgba(94,92,230,.14);
+  --bg-work:#0B0B12; --grid-dot:rgba(125,122,255,.14);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --gray:#8E8E93; --gray2:#636366; --gray3:#48484A; --gray4:#3A3A3C; --gray5:#2C2C2E; --gray6:#1C1C1E;
+  --bg:#000000; --surface:#1C1C1E;
+  --label:#F5F5F7; --label-2:rgba(235,235,245,.64); --label-3:rgba(235,235,245,.38);
+  --separator:rgba(84,84,88,.6); --fill:rgba(118,118,128,.24); --fill-strong:rgba(118,118,128,.34);
+  --green:#30D158; --green-soft:rgba(48,209,88,.16);
+  --indigo:#7D7AFF; --indigo-soft:rgba(94,92,230,.22);
+  --orange:#FF9F0A; --orange-soft:rgba(255,159,10,.16); --red:#FF453A; --red-soft:rgba(255,69,58,.16);
+  --glass:rgba(38,38,42,.58); --glass-edge:rgba(255,255,255,.10);
+  --glass-shadow:0 10px 34px rgba(0,0,0,.5), 0 1px 2px rgba(0,0,0,.4);
+  --dim:rgba(0,0,0,.55); --ambient-a:rgba(48,209,88,.09); --ambient-b:rgba(94,92,230,.14);
+  --bg-work:#0B0B12; --grid-dot:rgba(125,122,255,.14);
+  color-scheme:dark;
+}
+@media (prefers-contrast: more){
+  :root{ --gray:#6C6C70; --gray2:#8E8E93; --gray3:#AEAEB2; --gray4:#BCBCC0; --gray5:#D8D8DC; --gray6:#EBEBF0;
+    --label-2:rgba(60,60,67,.85); --label-3:rgba(60,60,67,.7); --separator:rgba(60,60,67,.4); --glass:rgba(255,255,255,.94); }
+}
+@media (prefers-reduced-transparency: reduce){ :root{ --glass: var(--surface); } }
+
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--bg);color:var(--label);font-family:var(--font);font-size:15px;line-height:1.45;letter-spacing:-0.012em;-webkit-font-smoothing:antialiased;overflow:hidden}
+button,input,textarea,select{font:inherit;color:inherit;letter-spacing:inherit}
+button{cursor:pointer;background:none;border:0;padding:0}
+:focus-visible{outline:3px solid color-mix(in srgb, var(--tint) 55%, transparent);outline-offset:2px;border-radius:8px}
+svg.i{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+
+.app{height:100%;display:grid;grid-template-columns:292px minmax(0,1fr) auto;position:relative;
+  background:radial-gradient(1200px 600px at 85% -10%, var(--ambient-a), transparent 60%), radial-gradient(900px 500px at 10% 110%, var(--ambient-b), transparent 60%), var(--bg)}
+.app[data-space="workspace"]{--tint:var(--indigo);--tint-soft:var(--indigo-soft);
+  background:radial-gradient(1100px 520px at 70% -12%, var(--ambient-b), transparent 60%), radial-gradient(var(--grid-dot) 1px, transparent 1.2px) 0 0/22px 22px, var(--bg-work)}
+.app[data-space="workspace"] .view{max-width:960px}
+.app[data-space="workspace"] .sidebar{border-top:3px solid var(--indigo)}
+.app[data-space="akira"] .sidebar{border-top:3px solid var(--green)}
+.app[data-space="akira"] .msg.user .bubble{border-radius:20px 20px 6px 20px}
+.space-tag{display:flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:999px;background:var(--tint);color:#fff;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;flex:none;transition:background .3s}
+.space-tag svg{width:14px;height:14px;stroke-width:2}
+.app.switching .main{animation:swap .35s cubic-bezier(.2,.8,.2,1)}
+@keyframes swap{from{opacity:0;transform:translateY(6px)}}
+.glass{background:var(--glass);backdrop-filter:blur(26px) saturate(180%);-webkit-backdrop-filter:blur(26px) saturate(180%);border:1px solid var(--glass-edge);box-shadow:var(--glass-shadow)}
+
+/* Sidebar */
+.sidebar{margin:10px 0 10px max(10px, env(safe-area-inset-left,0px));border-radius:var(--r-lg);display:flex;flex-direction:column;min-height:0;z-index:30}
+.sb-top{padding:14px 14px 8px;display:flex;flex-direction:column;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;padding:2px 4px}
+.mark{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:var(--tint);color:#fff;transition:background .3s}
+.mark svg{width:16px;height:16px;stroke-width:2}
+.brand b{display:block;font-family:var(--font-display);font-size:17px;font-weight:650;letter-spacing:-0.02em}
+.brand small{display:block;font-size:12px;color:var(--label-2);margin-top:-2px}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--fill);border-radius:10px;padding:2px}
+.seg button{height:30px;border-radius:8px;font-size:13px;font-weight:550;color:var(--label-2);display:flex;align-items:center;justify-content:center;gap:6px}
+.seg button[aria-pressed="true"]{color:var(--label);background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.seg button svg{width:15px;height:15px}
+.search{display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;border-radius:10px;background:var(--fill);color:var(--label-2)}
+.search input{border:0;background:none;outline:none;flex:1;min-width:0;font-size:14px;color:var(--label)}
+.search input::placeholder{color:var(--label-3)}
+.new-row{display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;border-radius:10px;font-size:14px;font-weight:600;color:var(--tint)}
+.new-row:hover{background:var(--tint-soft)}
+.sb-list{flex:1;overflow:auto;padding:0 8px 8px;min-height:0}
+.sb-section{font-size:12px;font-weight:600;color:var(--label-3);padding:10px 10px 6px;letter-spacing:.02em}
+.sb-empty{font-size:13px;color:var(--label-3);padding:6px 10px;line-height:1.4}
+.row{width:100%;display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;text-align:left;transition:background .15s}
+.row:hover{background:var(--fill)}
+.row[aria-current="true"]{background:var(--tint-soft)}
+.row[aria-current="true"] .row-title{color:var(--tint)}
+.row-ic{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:var(--fill);color:var(--label-2);flex:none}
+.row-ic.proj{color:#fff;font-weight:650;font-size:13px}
+.row-body{display:block;min-width:0;flex:1}
+.row-title{display:block;font-size:14px;font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row-sub{display:block;font-size:12.5px;color:var(--label-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row-meta{font-size:11.5px;color:var(--label-3);font-variant-numeric:tabular-nums;align-self:flex-start;padding-top:2px;white-space:nowrap;flex:none}
+.sb-foot{border-top:1px solid var(--separator);padding:8px;display:flex;flex-direction:column;gap:2px}
+.sb-foot .row-ic{background:none}
+.saved{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--label-3);padding:4px 10px 2px}
+.saved svg{width:13px;height:13px}
+
+/* Main */
+.main{position:relative;min-width:0;min-height:0;display:flex;flex-direction:column}
+.toolbar{position:absolute;top:10px;left:12px;right:12px;z-index:20;display:flex;align-items:center;gap:10px;pointer-events:none}
+.toolbar > *{pointer-events:auto}
+.capsule{display:flex;align-items:center;gap:2px;padding:4px;border-radius:999px}
+.icon-btn{width:36px;height:36px;border-radius:999px;display:grid;place-items:center;color:var(--label);transition:background .15s}
+.icon-btn:hover{background:var(--fill)}
+.icon-btn[aria-pressed="true"]{color:var(--tint);background:var(--tint-soft)}
+.tb-title{min-width:0;padding:6px 16px;border-radius:999px}
+.tb-title b{display:block;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-title span{display:block;font-size:12px;color:var(--label-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.spacer{flex:1}
+.only-narrow{display:none}
+.edge{position:absolute;top:0;left:0;right:0;height:78px;z-index:10;pointer-events:none;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);-webkit-mask-image:linear-gradient(#000 35%, transparent);mask-image:linear-gradient(#000 35%, transparent)}
+.scroll{flex:1;overflow:auto;min-height:0}
+.view{max-width:780px;margin:0 auto;padding:80px max(20px, env(safe-area-inset-right,0px)) 170px max(20px, env(safe-area-inset-left,0px))}
+
+/* Home / empty states */
+.hello{padding:12vh 0 8px}
+.hello h1{font-family:var(--font-display);font-size:34px;line-height:1.1;font-weight:700;letter-spacing:-0.025em;text-wrap:balance;margin:0}
+.hello p{color:var(--label-2);margin:8px 0 0;font-size:16px;max-width:52ch}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 6px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:999px;background:var(--surface);border:1px solid var(--separator);font-size:13.5px;transition:border-color .15s,color .15s}
+.chip:hover{border-color:var(--tint);color:var(--tint)}
+.chip svg{width:15px;height:15px;color:var(--tint)}
+.empty{text-align:center;padding:40px 16px;color:var(--label-2);display:flex;flex-direction:column;align-items:center;gap:10px}
+.empty b{color:var(--label);font-size:16px}
+.empty p{margin:0;max-width:44ch;font-size:14px}
+
+/* Thread */
+.thread{display:flex;flex-direction:column;gap:20px;padding-top:12px}
+.msg{display:flex;gap:12px;max-width:100%}
+.msg.user{justify-content:flex-end}
+.bubble{background:var(--tint);color:#fff;padding:10px 14px;border-radius:20px 20px 6px 20px;max-width:min(560px, 85%);white-space:pre-wrap;overflow-wrap:anywhere}
+.app[data-space="workspace"] .bubble{background:var(--surface);color:var(--label);border:1px solid var(--separator)}
+.av{width:28px;height:28px;border-radius:50%;background:var(--tint);color:#fff;display:grid;place-items:center;flex:none;margin-top:2px}
+.av svg{width:15px;height:15px;stroke-width:2}
+.reply{min-width:0;flex:1;display:flex;flex-direction:column;gap:10px}
+.who{font-size:12.5px;font-weight:600;color:var(--label-2)}
+.md{overflow-wrap:anywhere;max-width:66ch}
+.md > *{margin:0 0 10px}
+.md > *:last-child{margin-bottom:0}
+.md h3,.md h4{font-size:15.5px;font-weight:650;margin-top:14px}
+.md ul,.md ol{padding-left:22px}
+.md li{margin:3px 0}
+.md code{font-family:var(--font-mono);font-size:.88em;background:var(--fill);padding:1px 5px;border-radius:5px}
+.md pre{background:var(--fill);padding:12px;border-radius:10px;overflow-x:auto}
+.md pre code{background:none;padding:0}
+.md a{color:var(--tint)}
+.md blockquote{border-left:3px solid var(--separator);padding-left:12px;color:var(--label-2)}
+.err{color:var(--red);font-size:13.5px}
+.typing{display:flex;gap:4px;padding:8px 0;align-items:center}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--label-3);animation:blink 1.2s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes blink{0%,80%,100%{opacity:.3}40%{opacity:1}}
+.note{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--label-2);flex-wrap:wrap}
+.note svg{width:14px;height:14px;color:var(--tint)}
+.note.gone{text-decoration:line-through;opacity:.6}
+.link{color:var(--tint);font-weight:550}
+.link:hover{text-decoration:underline}
+.cite{display:inline-flex;align-items:center;height:19px;padding:0 6px;border-radius:6px;background:var(--tint-soft);color:var(--tint);font-size:11.5px;font-weight:650;font-variant-numeric:tabular-nums;vertical-align:1px}
+
+/* Buttons & fields */
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{height:32px;padding:0 14px;border-radius:999px;font-size:13.5px;font-weight:600;background:var(--fill);display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.btn:hover{background:var(--fill-strong)}
+.btn.primary{background:var(--tint);color:#fff}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.danger{background:var(--red-soft);color:var(--red)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn svg{width:15px;height:15px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field > span{font-size:12.5px;font-weight:600;color:var(--label-2)}
+.input{width:100%;border:1px solid var(--separator);background:var(--surface);border-radius:10px;padding:9px 12px;outline:none;font-size:14.5px}
+.input:focus{border-color:var(--tint);box-shadow:0 0 0 3px var(--tint-soft)}
+textarea.input{resize:vertical;min-height:80px;line-height:1.45}
+.swatches{display:flex;gap:8px}
+.sw{width:28px;height:28px;border-radius:50%;border:3px solid transparent;box-shadow:inset 0 0 0 2px var(--surface)}
+.sw[aria-checked="true"]{border-color:var(--label)}
+
+/* Composer */
+.composer-wrap{position:absolute;left:0;right:0;bottom:0;z-index:20;padding:0 max(16px, env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(16px, env(safe-area-inset-left,0px));pointer-events:none}
+.composer{pointer-events:auto;max-width:780px;margin:0 auto;border-radius:26px;padding:8px 8px 8px 16px;display:flex;flex-direction:column;gap:6px}
+.composer-row{display:flex;align-items:flex-end;gap:8px}
+.composer textarea{flex:1;min-width:0;border:0;outline:none;background:none;resize:none;padding:7px 0;max-height:160px;font-size:15px;line-height:1.4}
+.composer textarea::placeholder{color:var(--label-3)}
+.send{width:36px;height:36px;border-radius:50%;background:var(--tint);color:#fff;display:grid;place-items:center;flex:none}
+.send:disabled{opacity:.35;cursor:default}
+.send svg{stroke-width:2.2}
+.send .sq{width:12px;height:12px;border-radius:3px;background:#fff}
+.scope{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.pill{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 9px;border-radius:999px;background:var(--tint-soft);color:var(--tint);font-size:12px;font-weight:600}
+.pill svg{width:13px;height:13px}
+.scope small{font-size:12px;color:var(--label-3)}
+.banner{font-size:12.5px;color:var(--orange);padding:0 2px}
+
+/* Workspace */
+.proj-head{padding:22px 0 14px;display:flex;gap:16px;align-items:flex-start}
+.proj-badge{width:56px;height:56px;border-radius:14px;display:grid;place-items:center;color:#fff;font-family:var(--font-display);font-weight:700;font-size:24px;flex:none}
+.proj-head h1{font-family:var(--font-display);font-size:30px;line-height:1.1;font-weight:700;letter-spacing:-0.024em;margin:2px 0 4px;text-wrap:balance;overflow-wrap:anywhere}
+.proj-head p{margin:0;color:var(--label-2);max-width:60ch}
+.proj-head > div{min-width:0}
+.eyebrow{font-size:12px;font-weight:600;color:var(--tint);letter-spacing:.02em}
+.tabs{display:flex;gap:2px;background:var(--fill);padding:2px;border-radius:10px;overflow-x:auto;scrollbar-width:none;margin:6px 0 20px}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{height:30px;padding:0 14px;border-radius:8px;font-size:13px;font-weight:550;color:var(--label-2);white-space:nowrap;flex:1}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--label);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.tabs .n{color:var(--label-3);font-variant-numeric:tabular-nums;margin-left:4px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--separator);border-radius:var(--r-md);padding:16px;min-width:0}
+.panel h3{margin:0 0 10px;font-size:13px;font-weight:650;color:var(--label-2);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.panel.wide{grid-column:1/-1}
+.stats{display:flex;gap:22px;flex-wrap:wrap}
+.stat b{display:block;font-size:22px;font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-0.02em}
+.stat span{font-size:12px;color:var(--label-2)}
+.muted{color:var(--label-2);font-size:13.5px;margin:0}
+.stamp{font-size:12px;color:var(--label-3);font-weight:450}
+.list{display:flex;flex-direction:column}
+.li{display:flex;align-items:center;gap:12px;padding:10px 4px;border-top:1px solid var(--separator);min-width:0}
+.li:first-child{border-top:0}
+.li.click{cursor:pointer;border-radius:8px}
+.li.click:hover{background:var(--fill)}
+.li-body{flex:1;min-width:0}
+.li-title{font-size:14px;font-weight:550;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.li-sub{font-size:12.5px;color:var(--label-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.li-meta{font-size:12px;color:var(--label-3);font-variant-numeric:tabular-nums;white-space:nowrap}
+.x{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:var(--label-3);flex:none}
+.x:hover{background:var(--red-soft);color:var(--red)}
+.x svg{width:15px;height:15px}
+.file-ic{width:30px;height:36px;border-radius:6px;display:grid;place-items:center;font-size:9px;font-weight:700;letter-spacing:.04em;color:#fff;flex:none;background:var(--tint)}
+.check{width:22px;height:22px;border-radius:50%;border:1.6px solid var(--gray2);display:grid;place-items:center;flex:none}
+.check svg{width:13px;height:13px;stroke:#fff;stroke-width:2.6;opacity:0}
+.check[aria-checked="true"]{background:var(--tint);border-color:var(--tint)}
+.check[aria-checked="true"] svg{opacity:1}
+.li.is-done .li-title{color:var(--label-3);text-decoration:line-through}
+.tag{font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--fill);color:var(--label-2);white-space:nowrap}
+.tag.due{background:var(--orange-soft);color:var(--orange)}
+.addrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.addrow .input{flex:1;min-width:160px}
+.addrow input[type=date]{flex:0 0 auto;min-width:0;width:auto}
+.drop{border:1.5px dashed var(--gray3);border-radius:var(--r-md);padding:22px;text-align:center;color:var(--label-2);font-size:14px;display:flex;flex-direction:column;gap:10px;align-items:center;margin-bottom:14px;transition:border-color .15s,background .15s}
+.drop.over{border-color:var(--tint);background:var(--tint-soft)}
+.drop small{color:var(--label-3)}
+.convos{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:6px;scrollbar-width:thin}
+.convos .chip{flex:none;max-width:240px}
+.convos .chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.convos .chip[aria-current="true"]{background:var(--tint-soft);border-color:transparent;color:var(--tint);font-weight:600}
+.editor-head{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.editor-title{flex:1;min-width:200px;font-family:var(--font-display);font-size:24px;font-weight:700;letter-spacing:-0.02em;border:0;background:none;outline:none;padding:4px 0}
+.editor-body{width:100%;min-height:50vh;border:1px solid var(--separator);background:var(--surface);border-radius:var(--r-md);padding:16px;outline:none;resize:vertical;font-size:15px;line-height:1.6}
+.editor-body:focus{border-color:var(--tint)}
+
+/* Inspector */
+.inspector{width:310px;margin:10px max(10px, env(safe-area-inset-right,0px)) 10px 0;border-radius:var(--r-lg);display:flex;flex-direction:column;min-height:0;z-index:25}
+.ins-h{display:flex;align-items:center;justify-content:space-between;padding:14px 12px 8px 16px}
+.ins-h b{font-size:15px;font-weight:650}
+.ins-body{overflow:auto;padding:0 16px 16px;display:flex;flex-direction:column;gap:14px}
+.ins-body textarea.input{min-height:64px}
+.wall{display:flex;gap:10px;padding:12px;border-radius:12px;background:var(--fill);font-size:12.5px;color:var(--label-2)}
+.wall svg{color:var(--tint);margin-top:1px}
+.hr{height:1px;background:var(--separator)}
+
+/* Sheet / toast */
+.scrim{position:fixed;inset:0;background:var(--dim);z-index:60;display:grid;place-items:center;padding:20px max(16px, env(safe-area-inset-right,0px)) 20px max(16px, env(safe-area-inset-left,0px));animation:fade .2s}
+.sheet{width:min(520px,100%);max-height:85vh;overflow:auto;border-radius:24px;background:var(--surface);box-shadow:0 30px 80px rgba(0,0,0,.3);padding:20px;display:flex;flex-direction:column;gap:14px}
+.sheet h2{font-family:var(--font-display);font-size:22px;margin:0;letter-spacing:-0.02em}
+.sheet > p{margin:-8px 0 0;color:var(--label-2);font-size:14px}
+.toggle-row{display:flex;align-items:center;gap:12px;padding:4px 0}
+.toggle-row div{flex:1}
+.toggle-row b{display:block;font-size:14.5px;font-weight:550}
+.toggle-row span{font-size:12.5px;color:var(--label-2)}
+.switch{width:51px;height:31px;border-radius:999px;background:var(--fill-strong);position:relative;flex:none;transition:background .2s}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.2);transition:transform .2s}
+.switch[aria-checked="true"]{background:var(--green)}
+.switch[aria-checked="true"]::after{transform:translateX(20px)}
+.sheet-foot{display:flex;justify-content:flex-end;gap:8px}
+.toast{position:fixed;left:50%;bottom:calc(110px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:70;border-radius:999px;padding:8px 8px 8px 16px;display:flex;align-items:center;gap:12px;font-size:14px;font-weight:550;animation:rise .25s;max-width:calc(100% - 32px)}
+.toast .btn{height:28px}
+@keyframes fade{from{opacity:0}}
+@keyframes rise{from{opacity:0;transform:translate(-50%,8px)}}
+.fadein{animation:fade .25s}
+
+.tabbar{display:none}
+@media (max-width: 1180px){
+  .app{grid-template-columns:292px minmax(0,1fr)}
+  .inspector{position:absolute;right:0;top:0;bottom:0;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+}
+@media (max-width: 820px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .space-tag{padding:0 10px}
+  .sidebar{position:absolute;top:0;bottom:0;left:0;width:min(300px, calc(100% - 40px));transform:translateX(-110%);transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+  .app.drawer .sidebar{transform:none}
+  .only-narrow{display:grid}
+  .view{padding-top:72px;padding-bottom:220px}
+  .composer-wrap{bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+  .tabbar{display:flex;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:40;border-radius:999px;padding:4px;gap:2px}
+  .tabbar button{display:flex;flex-direction:column;align-items:center;gap:1px;width:84px;height:46px;justify-content:center;border-radius:999px;font-size:10.5px;font-weight:600;color:var(--label-2)}
+  .tabbar button[aria-pressed="true"]{color:var(--tint);background:var(--tint-soft)}
+  .toast{bottom:calc(170px + env(safe-area-inset-bottom,0px))}
+  .grid2{grid-template-columns:minmax(0,1fr)}
+  .inspector{width:min(330px, calc(100% - 20px))}
+  .hello{padding-top:6vh}
+  .hello h1{font-size:30px}
+}
+@media (prefers-reduced-motion: reduce){ *{animation:none!important;transition:none!important} }
+
+/* ---------- Intelligence families ---------- */
+:root{ --c-core: var(--tint); --c-arc:#D93A6E; --c-una:#0A7FB8; --c-live:#8E44D6; --c-cast:#00897B; }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --c-arc:#FF6B9A; --c-una:#5AC8FA; --c-live:#BF5AF2; --c-cast:#40D0C0; } }
+:root[data-theme="dark"]{ --c-arc:#FF6B9A; --c-una:#5AC8FA; --c-live:#BF5AF2; --c-cast:#40D0C0; }
+.app{--c-core: var(--tint)}
+
+.who{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.route{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px;border-radius:999px;background:var(--fill);font-size:11.5px;font-weight:600;color:var(--label-2)}
+.route:hover{background:var(--fill-strong);color:var(--label)}
+.route i,.sig i,.legend i{width:7px;height:7px;border-radius:50%;flex:none;display:inline-block}
+.route svg{width:12px;height:12px}
+
+.fhp{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px}
+.sig{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 9px;border-radius:999px;background:var(--fill);color:var(--label-2);font-weight:550;animation:pop .2s;max-width:220px}
+.sig b{font-weight:650;color:var(--label);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sig svg{width:13px;height:13px}
+.sig.lead{background:var(--surface);border:1px solid var(--separator);color:var(--label)}
+.fhp-label{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--label-3);margin-right:2px}
+@keyframes pop{from{opacity:0;transform:scale(.92)}}
+
+.refs{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.refs > span{font-size:12px;color:var(--label-3);font-weight:600;margin-right:2px}
+.ref{display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 10px;border-radius:999px;border:1px solid var(--separator);background:var(--surface);font-size:12.5px;max-width:240px}
+.ref span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ref svg{width:13px;height:13px;color:var(--tint)}
+.ref:hover{border-color:var(--tint)}
+
+.arc-card{margin:0;border:1px solid var(--separator);border-radius:var(--r-md);overflow:hidden;background:var(--surface);max-width:540px}
+.arc-card img{display:block;width:100%;height:auto;background:#fff}
+.arc-card figcaption{display:flex;align-items:center;gap:6px;padding:8px 12px;font-size:12px;color:var(--label-2)}
+.arc-card svg.i{width:14px;height:14px;color:var(--c-arc)}
+.arc-card.drawing{display:flex;align-items:center;gap:8px;padding:34px 16px;justify-content:center;color:var(--label-2);font-size:13.5px;background:linear-gradient(110deg, var(--surface) 30%, color-mix(in srgb, var(--c-arc) 10%, var(--surface)) 50%, var(--surface) 70%) 0 0/200% 100%;animation:shimmer 1.6s linear infinite}
+@keyframes shimmer{to{background-position:-200% 0}}
+
+/* Live / Cast */
+.orb{width:150px;height:150px;border-radius:50%;margin:6px auto;background:conic-gradient(from 0deg, var(--c-live), var(--c-cast), var(--c-una), var(--c-arc), var(--c-live));animation:spin 9s linear infinite, breathe 3.2s ease-in-out infinite;box-shadow:0 0 70px color-mix(in srgb, var(--c-live) 35%, transparent);-webkit-mask:radial-gradient(circle, #000 58%, rgba(0,0,0,.65) 70%, transparent 71%);mask:radial-gradient(circle, #000 58%, rgba(0,0,0,.65) 70%, transparent 71%)}
+@keyframes spin{to{rotate:360deg}}
+@keyframes breathe{50%{scale:1.06}}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mode{border:1px solid var(--separator);border-radius:var(--r-md);padding:12px}
+.mode b{display:flex;align-items:center;gap:6px;font-size:14px}
+.mode p{margin:4px 0 0;font-size:12.5px;color:var(--label-2)}
+.center-note{text-align:center;color:var(--label-2);font-size:14px;margin:0}
+
+/* Intelligence sheet */
+.sheet.wide{width:min(640px,100%)}
+.intel-sec{display:flex;flex-direction:column;gap:8px}
+.intel-sec h3{font-size:12px;font-weight:700;color:var(--label-3);letter-spacing:.05em;text-transform:uppercase;margin:0}
+.tiers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tier{border:1px solid var(--separator);border-radius:12px;padding:10px 12px;min-width:0}
+.tier b{display:block;font-size:14px}
+.tier span{font-size:12px;color:var(--label-2)}
+.fam{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--separator)}
+.fam:first-of-type{border-top:0}
+.fam-dot{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;color:#fff;flex:none}
+.fam-dot svg{width:17px;height:17px;stroke-width:2}
+.fam-body{flex:1;min-width:0}
+.fam-body b{font-size:14.5px}
+.fam-body p{margin:2px 0 6px;font-size:12.5px;color:var(--label-2)}
+.mini{display:inline-flex;font-size:11px;font-weight:600;padding:1px 7px;border-radius:999px;background:var(--fill);color:var(--label-2);margin-right:4px}
+.status{font-size:11.5px;font-weight:600;white-space:nowrap}
+.status.ok{color:var(--green)}
+.status.soon{color:var(--orange)}
+.centers{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.center{border:1px solid var(--separator);border-radius:12px;padding:12px;font-size:13px;min-width:0}
+.center b{display:flex;align-items:center;gap:6px;font-size:14px;margin-bottom:2px}
+.center > span{display:block;font-size:12px;color:var(--label-2);margin-bottom:8px}
+.center ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px}
+.center li{display:flex;justify-content:space-between;gap:8px}
+.protocol{padding:12px;border-radius:12px;background:var(--fill);font-size:13px;color:var(--label-2)}
+.protocol b{color:var(--label)}
+.usage{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--fill);gap:2px}
+.usage i{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--label-2)}
+.legend span{display:inline-flex;align-items:center;gap:5px;font-variant-numeric:tabular-nums}
+.why-list{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+
+/* Relations */
+.rel{display:grid;grid-template-columns:250px minmax(0,1fr);gap:14px;align-items:start}
+.rel-list{display:flex;flex-direction:column;gap:2px;max-height:68vh;overflow:auto;padding:8px}
+.rel-list .input{margin-bottom:6px}
+.ent{display:flex;justify-content:space-between;gap:8px;padding:7px 10px;border-radius:8px;font-size:14px;text-align:left;min-width:0}
+.ent b{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ent:hover{background:var(--fill)}
+.ent[aria-current="true"]{background:var(--tint-soft);color:var(--tint)}
+.ent[aria-current="true"] b{font-weight:650}
+.ent span{color:var(--label-3);font-variant-numeric:tabular-nums;font-size:12px}
+.graph{width:100%;height:auto;display:block;margin-bottom:6px}
+.graph text{font-size:11px;fill:var(--label-2);font-family:var(--font)}
+.graph .ct{font-size:13px;font-weight:650;fill:#fff}
+.graph .nt{font-size:10px;font-weight:700;fill:#fff}
+.graph line{stroke:var(--separator);stroke-width:1.5}
+.graph g[data-act]{cursor:pointer}
+.graph g[data-act]:hover circle{stroke:var(--label);stroke-width:2}
+.snip{font-size:12.5px;color:var(--label-2);white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.also{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:4px 0 12px;font-size:12px;color:var(--label-3)}
+.also button{font-size:12.5px;padding:2px 9px;border-radius:999px;background:var(--fill);color:var(--label)}
+.also button:hover{background:var(--tint-soft);color:var(--tint)}
+
+@media (max-width: 820px){
+  .rel{grid-template-columns:minmax(0,1fr)}
+  .rel-list{max-height:220px}
+  .centers,.modes{grid-template-columns:minmax(0,1fr)}
+  .tiers{grid-template-columns:minmax(0,1fr)}
+}
+
+/* ---------- Chat kinds ---------- */
+.kinds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.kind-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;border-radius:10px;background:var(--fill);font-size:12px;font-weight:600;color:var(--label)}
+.kind-btn:hover{background:var(--fill-strong)}
+.kind-btn[aria-current="true"]{background:var(--tint-soft);color:var(--tint)}
+.kind-btn svg{width:17px;height:17px}
+.k-research{color:var(--orange)} .k-image{color:var(--c-arc)} .k-code{color:var(--c-una)} .k-chat{color:var(--tint)}
+.row-ic.kind{width:26px;height:26px;border-radius:7px;background:var(--fill)}
+.row-ic.kind svg{width:15px;height:15px}
+.hello .kind-mark{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:var(--fill);margin-bottom:14px}
+.hello .kind-mark svg{width:24px;height:24px}
+.qchips{display:flex;flex-wrap:wrap;gap:4px;padding:2px 10px 8px}
+.qchip{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--tint-soft);color:var(--tint)}
+.qchip svg{width:12px;height:12px}
+.ask-search{display:flex;align-items:center;gap:6px;margin:6px 10px;font-size:13px;font-weight:600;color:var(--tint)}
+.ask-search:disabled{opacity:.5}
+
+/* ---------- Composer controls ---------- */
+.composer{position:relative}
+.model-btn{height:30px;padding:0 10px;border-radius:999px;background:var(--fill);font-size:12.5px;font-weight:650;display:inline-flex;align-items:center;gap:4px;flex:none;margin-bottom:3px;white-space:nowrap}
+.model-btn:hover{background:var(--fill-strong)}
+.model-btn svg{width:13px;height:13px}
+.model-menu{position:absolute;bottom:calc(100% + 8px);left:8px;width:min(300px, calc(100% - 16px));border-radius:18px;padding:6px;z-index:5;background:var(--surface);border:1px solid var(--separator);box-shadow:0 18px 50px rgba(0,0,0,.18)}
+.mm-opt{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border-radius:12px;text-align:left;width:100%}
+.mm-opt:hover{background:var(--fill)}
+.mm-opt b{display:block;font-size:14px;font-weight:600}
+.mm-opt span{font-size:12.5px;color:var(--label-2)}
+.mm-opt .tick{width:18px;height:18px;color:var(--tint);visibility:hidden;margin-top:1px}
+.mm-opt[aria-checked="true"] .tick{visibility:visible}
+.mm-opt div{flex:1}
+.mic.on{background:var(--red);color:#fff;animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 6px var(--red-soft)}}
+kbd{font-family:var(--font);font-size:12px;font-weight:600;padding:1px 6px;border-radius:5px;border:1px solid var(--separator);background:var(--fill)}
+
+/* ---------- Research ---------- */
+.rplan{border:1px solid var(--separator);border-radius:var(--r-md);padding:12px 14px;background:var(--surface);max-width:620px}
+.rplan h4{margin:0 0 8px;font-size:13px;font-weight:650;display:flex;align-items:center;gap:6px;color:var(--orange)}
+.rplan h4 svg{width:15px;height:15px}
+.rstep{display:flex;gap:8px;font-size:13.5px;padding:3px 0;align-items:flex-start}
+.rstep svg{width:15px;height:15px;margin-top:2px;color:var(--label-3)}
+.rstep.done svg{color:var(--green)}
+.md pre{position:relative}
+.copy{position:absolute;top:6px;right:6px;font-size:11.5px;font-weight:600;padding:3px 8px;border-radius:6px;background:var(--surface);border:1px solid var(--separator);font-family:var(--font)}
+.arc-card figcaption .link{margin-left:auto}
+.app.no-routes .route{display:none}
+
+/* ---------- Settings ---------- */
+.settings{display:grid;grid-template-columns:190px minmax(0,1fr);gap:22px;align-items:start;padding-top:8px}
+.set-nav{position:sticky;top:80px;display:flex;flex-direction:column;gap:2px}
+.set-nav button{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;font-size:14px;font-weight:550;text-align:left;color:var(--label)}
+.set-nav button:hover{background:var(--fill)}
+.set-nav button[aria-current="true"]{background:var(--tint-soft);color:var(--tint)}
+.set-nav svg{width:17px;height:17px}
+.set-body{min-width:0;display:flex;flex-direction:column;gap:6px}
+.set-body h1{font-family:var(--font-display);font-size:28px;font-weight:700;letter-spacing:-0.02em;margin:0 0 4px}
+.set-body > p{margin:0 0 8px;color:var(--label-2);max-width:60ch}
+.group-title{font-size:12px;font-weight:700;color:var(--label-3);letter-spacing:.05em;text-transform:uppercase;margin:16px 4px 6px}
+.group{background:var(--surface);border:1px solid var(--separator);border-radius:var(--r-md);overflow:hidden}
+.set-row{display:flex;align-items:center;gap:14px;padding:12px 16px;border-top:1px solid var(--separator);flex-wrap:wrap}
+.set-row:first-child{border-top:0}
+.set-row .lbl{flex:1;min-width:180px}
+.set-row .lbl b{display:block;font-size:14.5px;font-weight:550}
+.set-row .lbl span{font-size:12.5px;color:var(--label-2)}
+.segx{display:inline-grid;grid-auto-flow:column;background:var(--fill);border-radius:9px;padding:2px;gap:2px}
+.segx button{height:28px;padding:0 12px;border-radius:7px;font-size:13px;font-weight:550;color:var(--label-2)}
+.segx button[aria-pressed="true"]{background:var(--surface);color:var(--label);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+select.input{width:auto;padding:7px 10px}
+.count-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;padding:14px 16px}
+@media (max-width: 820px){
+  .settings{grid-template-columns:minmax(0,1fr)}
+  .set-nav{position:static;flex-direction:row;overflow-x:auto;scrollbar-width:none}
+  .set-nav button{flex:none}
+  .model-btn span.full{display:none}
+}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16l.7 1.8 1.8.7-1.8.7L19 21l-.7-1.8-1.8-.7 1.8-.7z"/></symbol>
+  <symbol id="i-stack" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="3"/><path d="M8 7V5.5A1.5 1.5 0 0 1 9.5 4h5A1.5 1.5 0 0 1 16 5.5V7"/><path d="M3 12.5h18"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-6.5 8 6.5M6 9.5V20h12V9.5"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-side" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="15" rx="3"/><path d="M9.5 4.5v15"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-brain" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v4.5l3 2"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M14.5 3.5v17"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4A8 8 0 1 1 20 12z"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M7 3.5h7l4.5 4.5v12.5H7z"/><path d="M14 3.5V8h4.5"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13"/></symbol>
+  <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18.5a4.5 4.5 0 0 1-.6-9 6 6 0 0 1 11.4 1.6A3.8 3.8 0 0 1 17.5 18.5z"/></symbol>
+  <symbol id="i-device" viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 18h2"/></symbol>
+  <symbol id="i-sync" viewBox="0 0 24 24"><rect x="3" y="6" width="7" height="12" rx="2"/><path d="M14 10h7M14 14h7M18 7l3 3-3 3"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V4M7 9l5-5 5 5M5 15v4.5h14V15"/></symbol>
+  <symbol id="i-wave" viewBox="0 0 24 24"><path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.3 11l7.4-3.8M8.3 13l7.4 3.8"/></symbol>
+  <symbol id="i-cpu" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2.5"/><path d="M9.5 3v3M14.5 3v3M9.5 18v3M14.5 18v3M3 9.5h3M3 14.5h3M18 9.5h3M18 14.5h3"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="M20.5 16l-5-5-8 8.5"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="M8.5 7L3.5 12l5 5M15.5 7l5 5-5 5"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><rect x="3" y="6.5" width="13" height="11" rx="2.5"/><path d="M16 10.5l5-3v9l-5-3"/></symbol>
+  <symbol id="i-person" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.5-3.2 8-7.5 9.5-4.3-1.5-7.5-5-7.5-9.5V6z"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24"><path d="M3.5 12.5V4.5h8l9 9-8 8z"/><circle cx="8" cy="9" r="1.3"/></symbol>
+</svg>
+
+<div class="app" id="app" data-space="akira">
+  <aside class="sidebar glass" id="sidebar" aria-label="Sidebar">
+    <div class="sb-top">
+      <div class="brand">
+        <span class="mark" id="brandMark"><svg class="i"><use href="#i-spark"/></svg></span>
+        <div><b id="brandName">Akira</b><small id="brandSub">Home · everyday help</small></div>
+      </div>
+      <div class="seg" role="group" aria-label="Space">
+        <button data-act="space" data-v="akira" aria-pressed="true"><svg class="i"><use href="#i-home"/></svg>Home</button>
+        <button data-act="space" data-v="workspace" aria-pressed="false"><svg class="i"><use href="#i-stack"/></svg>Workspace</button>
+      </div>
+      <label class="search"><svg class="i"><use href="#i-search"/></svg><input id="q" type="search" placeholder="Search chats" aria-label="Search" autocomplete="off"></label>
+      <button class="new-row" data-act="newItem"><svg class="i"><use href="#i-plus"/></svg><span id="sbNewLabel">New chat</span></button>
+      <div class="kinds" id="kinds">
+        <button class="kind-btn" data-act="newKind" data-v="research"><svg class="i k-research"><use href="#i-search"/></svg>Research</button>
+        <button class="kind-btn" data-act="newKind" data-v="image"><svg class="i k-image"><use href="#i-image"/></svg>Image</button>
+        <button class="kind-btn" data-act="newKind" data-v="code"><svg class="i k-code"><use href="#i-code"/></svg>Code</button>
+      </div>
+    </div>
+    <nav class="sb-list" id="sbList"></nav>
+    <div class="sb-foot">
+      <button class="row" id="setBtn" data-act="settings"><span class="row-ic"><svg class="i"><use href="#i-gear"/></svg></span><span class="row-body"><span class="row-title">Settings</span><span class="row-sub" id="setSub">Memory, relations, intelligence</span></span></button>
+      <div class="saved" id="savedMode"><svg class="i"><use href="#i-cloud"/></svg><span>Loading…</span></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="edge" aria-hidden="true"></div>
+    <div class="toolbar">
+      <div class="capsule glass only-narrow"><button class="icon-btn" data-act="drawer" aria-label="Show sidebar"><svg class="i"><use href="#i-side"/></svg></button></div>
+      <div class="space-tag" id="spaceTag"></div>
+      <div class="tb-title glass"><b id="tbTitle">New chat</b><span id="tbSub">Home</span></div>
+      <div class="spacer"></div>
+      <div class="capsule glass">
+        <button class="icon-btn" id="ctxBtn" data-act="ctx" aria-label="Project context" aria-pressed="false" hidden><svg class="i"><use href="#i-info"/></svg></button>
+        <button class="icon-btn" id="delBtn" data-act="delCurrent" aria-label="Delete chat" hidden><svg class="i"><use href="#i-trash"/></svg></button>
+        <button class="icon-btn" id="newBtn" data-act="newItem" aria-label="New chat"><svg class="i"><use href="#i-plus"/></svg></button>
+      </div>
+    </div>
+    <div class="scroll" id="scroll"><div class="view" id="view"></div></div>
+    <div class="composer-wrap" id="composerWrap">
+      <form class="composer glass" id="composer">
+        <div class="scope" id="scope" hidden></div>
+        <div class="fhp" id="fhp" aria-live="polite" hidden></div>
+        <div class="banner" id="banner" hidden></div>
+        <div class="model-menu" id="modelMenu" role="menu" aria-label="Model" hidden></div>
+        <div class="composer-row">
+          <button type="button" class="model-btn" id="modelBtn" data-act="modelMenu" aria-haspopup="menu" aria-label="Choose model"><span id="modelLabel">Auto</span><svg class="i"><use href="#i-down"/></svg></button>
+          <textarea id="input" rows="1" placeholder="Ask Akira anything" aria-label="Message"></textarea>
+          <button type="button" class="icon-btn mic" id="micBtn" data-act="dictate" aria-label="Dictate" aria-pressed="false"><svg class="i"><use href="#i-mic"/></svg></button>
+          <button type="button" class="icon-btn" data-act="live" aria-label="Talk with Akira live"><svg class="i"><use href="#i-wave"/></svg></button>
+          <button class="send" id="send" aria-label="Send" disabled><svg class="i"><use href="#i-up"/></svg></button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <aside class="inspector glass" id="inspector" aria-label="Project context" hidden></aside>
+</div>
+
+<nav class="tabbar glass" aria-label="Spaces">
+  <button data-act="space" data-v="akira" aria-pressed="true"><svg class="i"><use href="#i-home"/></svg>Home</button>
+  <button data-act="space" data-v="workspace" aria-pressed="false"><svg class="i"><use href="#i-stack"/></svg>Workspace</button>
+  <button data-act="settings" id="tabSet"><svg class="i"><use href="#i-gear"/></svg>Settings</button>
+</nav>
+
+<input type="file" id="fileInput" multiple accept=".txt,.md,.markdown,.csv,.tsv,.json,.html,.htm,.xml,.rtf,.log,.yaml,.yml,text/*" hidden>
+<div id="layer"></div>
+
+<script>
+/* ============ helpers ============ */
+const $ = s => document.querySelector(s);
+const ic = id => `<svg class="i"><use href="#i-${id}"/></svg>`;
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const now = () => Date.now();
+const COLORS = ['#4B49C7','#248A3D','#C55300','#D70015','#007AFF','#AF52DE','#8E8E93'];
+const trunc = (s, n) => s.length > n ? s.slice(0, n - 1).trim() + '…' : s;
+
+function when(ts){
+  if (!ts) return '';
+  const d = new Date(ts), t = new Date();
+  const days = Math.floor((new Date(t.toDateString()) - new Date(d.toDateString())) / 864e5);
+  if (days === 0) return d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return d.toLocaleDateString([], {weekday:'short'});
+  return d.toLocaleDateString([], {month:'short', day:'numeric'});
+}
+function dueLabel(s){
+  if (!s) return '';
+  const d = new Date(s + 'T00:00'), t = new Date(new Date().toDateString());
+  const diff = Math.round((d - t) / 864e5);
+  if (diff === 0) return 'Today'; if (diff === 1) return 'Tomorrow'; if (diff < 0) return 'Overdue';
+  return d.toLocaleDateString([], {month:'short', day:'numeric'});
+}
+const words = s => (s.trim().match(/\S+/g) || []).length;
+
+/* Small, safe Markdown renderer */
+function inline(s){
+  s = esc(s);
+  s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+  s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/(^|[^*])\*([^*\s][^*]*)\*/g, '$1<em>$2</em>');
+  s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  s = s.replace(/\[S(\d+)\]/g, '<span class="cite">S$1</span>');
+  return s;
+}
+function md(src){
+  const lines = String(src || '').replace(/\r/g,'').split('\n');
+  let out = '', para = [], list = null, code = null;
+  const flushP = () => { if (para.length){ out += `<p>${inline(para.join(' '))}</p>`; para = []; } };
+  const flushL = () => { if (list){ out += `<${list.t}>${list.items.map(i => `<li>${inline(i)}</li>`).join('')}</${list.t}>`; list = null; } };
+  for (const line of lines){
+    if (code !== null){
+      if (/^```/.test(line)){ out += `<pre><button class="copy" data-act="copy">Copy</button><code>${esc(code.join('\n'))}</code></pre>`; code = null; } else code.push(line);
+      continue;
+    }
+    if (/^```/.test(line)){ flushP(); flushL(); code = []; continue; }
+    let m;
+    if (!line.trim()){ flushP(); flushL(); continue; }
+    if ((m = line.match(/^#{1,6}\s+(.*)/))){ flushP(); flushL(); out += `<h3>${inline(m[1])}</h3>`; continue; }
+    if ((m = line.match(/^\s*[-*•]\s+(.*)/))){ flushP(); if (!list || list.t !== 'ul'){ flushL(); list = {t:'ul', items:[]}; } list.items.push(m[1]); continue; }
+    if ((m = line.match(/^\s*\d+[.)]\s+(.*)/))){ flushP(); if (!list || list.t !== 'ol'){ flushL(); list = {t:'ol', items:[]}; } list.items.push(m[1]); continue; }
+    if ((m = line.match(/^>\s?(.*)/))){ flushP(); flushL(); out += `<blockquote>${inline(m[1])}</blockquote>`; continue; }
+    flushL(); para.push(line.trim());
+  }
+  if (code !== null) out += `<pre><code>${esc(code.join('\n'))}</code></pre>`;
+  flushP(); flushL();
+  return out;
+}
+
+/* Arc: render SVG concepts as images (an <img> never runs scripts) */
+function arcify(content){
+  const svgs = [];
+  let c = String(content || '').replace(/```svg\s*([\s\S]*?)```/g, (m, s) => { svgs.push(s); return `\n\n@@ARC${svgs.length-1}@@\n\n`; });
+  c = c.replace(/(<svg[\s\S]*?<\/svg>)/g, m => { svgs.push(m); return `\n\n@@ARC${svgs.length-1}@@\n\n`; });
+  let pending = false;
+  const k = c.search(/```svg|<svg/);
+  if (k >= 0){ c = c.slice(0, k); pending = true; }
+  let html = md(c).replace(/<p>@@ARC(\d+)@@<\/p>/g, (m, i) => arcCard(svgs[+i]));
+  if (pending) html += `<div class="arc-card drawing">${ic('image')}Arc is drawing…</div>`;
+  return html;
+}
+function arcCard(svg){
+  let s = String(svg || '').trim();
+  if (!/^<svg[\s\S]*<\/svg>$/i.test(s)) return '';
+  if (!/xmlns=/.test(s)) s = s.replace(/<svg/i, '<svg xmlns="http://www.w3.org/2000/svg"');
+  const src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(s);
+  return `<figure class="arc-card"><img src="${src}" alt="Image made by Arc"><figcaption>${ic('image')}Arc · vector image${downloads ? '<button class="link" data-act="dlSvg">Download</button>' : ''}</figcaption></figure>`;
+}
+
+/* ============ Akira server connector ============
+   When this page isn't running on claude.ai, cloud work goes to an Akira server
+   (python3 -m akira.server). The connector behaves like the claude.ai `sample`
+   function, so the rest of the page works the same either way. */
+const serverURL = () => ((S.profile.prefs && S.profile.prefs.server) || (document.querySelector('meta[name="akira-server"]') || {}).content || '').trim().replace(/\/+$/, '');
+const RANK = { Standard:'0', Lite:'0', Pro:'1', General:'1', Ultra:'2', Max:'2', quick:'0', default:'1', complex:'2' };
+let backend = null;   // 'claude' | 'akira' | null
+
+function pngsToSvg(pngs){
+  const n = pngs.length, cols = n > 1 ? 2 : 1, size = 128, rows = Math.ceil(n / cols);
+  const cells = pngs.map((d, i) => `<image href="data:image/png;base64,${d}" x="${(i % cols) * (size + 4)}" y="${Math.floor(i / cols) * (size + 4)}" width="${size}" height="${size}"/>`).join('');
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${cols * (size + 4) - 4} ${rows * (size + 4) - 4}">${cells}</svg>`;
+}
+
+function akiraServer(base){
+  const err = (code, message, text) => ({ code, message, ...(text ? { text } : {}) });
+  async function call(input, opts = {}){
+    if (opts.tools && opts.tools.length) throw err('tools_unavailable', 'The Akira server runs its own tools.');
+    const turns = typeof input === 'string' ? [{ role:'user', content:input }] : input.map(t => ({ role:t.role, content:String(t.content) }));
+    const hint = opts.akira || {};
+    const body = { messages:turns, stream:true, family:hint.family || 'auto', tier:RANK[hint.tier] || RANK[opts.modelTier] || 'auto' };
+    let res, text = '', pngs = [];
+    try {
+      res = await fetch(base + '/v1/chat', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify(body), signal:opts.signal });
+    } catch (e) {
+      throw e && e.name === 'AbortError' ? err('cancelled', 'Stopped.') : err('upstream_error', 'The Akira server could not be reached.');
+    }
+    if (!res.ok){
+      const code = { 429:'rate_limited', 401:'not_granted', 413:'prompt_too_large' }[res.status] || 'upstream_error';
+      throw err(code, 'Akira server returned ' + res.status);
+    }
+    const reader = res.body.getReader(), dec = new TextDecoder();
+    let buf = '';
+    const emit = delta => { text += delta; opts.onText && opts.onText({ text, delta }); };
+    try {
+      for (;;){
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream:true });
+        const parts = buf.split('\n\n'); buf = parts.pop();
+        for (const part of parts){
+          if (!part.startsWith('data: ')) continue;
+          let ev; try { ev = JSON.parse(part.slice(6)); } catch { continue; }
+          if (ev.type === 'text' && ev.text) emit(ev.text);
+          else if (ev.type === 'image') pngs.push(ev.data);
+          else if (ev.type === 'error') throw err('upstream_error', ev.message, text);
+        }
+      }
+    } catch (e) {
+      if (e && e.code) throw e;
+      throw e && e.name === 'AbortError' ? err('cancelled', 'Stopped.', text) : err('upstream_error', 'The connection dropped.', text);
+    }
+    if (pngs.length) emit('\n\n```svg\n' + pngsToSvg(pngs) + '\n```\n');
+    if (!text.trim()) throw err('empty_completion', 'No answer came back.');
+    return { text, truncated:false };
+  }
+  call.json = async (input, opts = {}) => {
+    const { text } = await call(input, opts);
+    const t = text.trim(), fence = t.match(/```(?:json)?\s*([\s\S]*?)```/);
+    for (const c of [t, fence && fence[1], t.slice(Math.min(...[t.indexOf('['), t.indexOf('{')].filter(i => i >= 0)), Math.max(t.lastIndexOf(']'), t.lastIndexOf('}')) + 1)]){
+      if (!c) continue;
+      try { return JSON.parse(c); } catch {}
+    }
+    throw err('invalid_json', 'The reply wasn’t JSON.', text);
+  };
+  call.limits = async () => ({ maxPromptBytes: 262144 });
+  return call;
+}
+
+async function connectServer(url){
+  const base = url.trim().replace(/\/+$/, '');
+  const r = await fetch(base + '/v1/status');
+  if (!r.ok) throw new Error('status ' + r.status);
+  return r.json();
+}
+
+/* ============ storage ============ */
+const S = { profile:{ memory:[], memOn:true }, chats:[], projects:[], pchats:[], docs:[], sources:[] };
+const COLLS = ['chats','projects','pchats','docs','sources'];
+const LS_KEY = 'akira.v1';
+let mode = 'loading', root = null, sample = null, downloads = null;
+
+async function boot(){
+  const c = window.claude;
+  try {
+    const [db, user, smp, dl] = c ? await Promise.all([c.use('db'), c.use('user'), c.use('sample'), c.use('downloads')]) : [null, null, null, null];
+    sample = smp; downloads = dl;
+    backend = sample ? 'claude' : null;
+    const id = user ? await user.id() : null;
+    if (db && id){
+      root = db.doc(`data/users/${id}/profile`);
+      const p = await root.get();
+      if (p.exists) S.profile = { ...S.profile, ...p.data() };
+      for (const k of COLLS){
+        const q = await root.collection(k).get();
+        S[k] = q.docs.map(d => ({ ...d.data(), id: d.id }));
+      }
+      mode = 'account';
+    }
+  } catch (e) { root = null; }
+  if (mode !== 'account'){
+    try { const raw = localStorage.getItem(LS_KEY); if (raw) Object.assign(S, JSON.parse(raw)); } catch {}
+    mode = 'browser';
+  }
+  if (!sample && serverURL()){ sample = akiraServer(serverURL()); backend = 'akira'; }
+  applyPrefs();
+  render();
+}
+
+let lsTimer;
+function saveLocal(){
+  clearTimeout(lsTimer);
+  lsTimer = setTimeout(() => {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(S)); }
+    catch { toast('This browser is out of space. Remove some sources to keep saving.'); }
+  }, 300);
+}
+const writing = {};
+function save(coll, id){
+  if (mode === 'browser') return saveLocal();
+  if (mode !== 'account') return;
+  const key = coll ? coll + '/' + id : 'profile';
+  if (writing[key]){ writing[key].again = true; return; }
+  writing[key] = { again:false };
+  (async () => {
+    try {
+      if (!coll) await root.set(JSON.parse(JSON.stringify(S.profile)));
+      else {
+        const obj = S[coll].find(x => x.id === id);
+        if (obj){ const { id: _, ...body } = obj; await root.collection(coll).doc(id).set(JSON.parse(JSON.stringify(body))); }
+      }
+    } catch (e) { saveError(e); }
+    const again = writing[key].again; delete writing[key];
+    if (again) save(coll, id);
+  })();
+}
+function remove(coll, id){
+  S[coll] = S[coll].filter(x => x.id !== id);
+  if (mode === 'browser') return saveLocal();
+  if (mode === 'account') root.collection(coll).doc(id).delete().catch(saveError);
+}
+function saveError(e){
+  const c = e && e.code;
+  if (c === 'quota_exceeded' || c === 'invalid_argument') toast('Couldn’t save: this item is too large. Try a shorter document or source.');
+  else toast('Couldn’t save that change. Check your connection and try again.');
+}
+
+/* ============ state ============ */
+const state = { space:'akira', view:'main', setTab:'general', newKind:'chat', searchAI:null, chat:null, project:null, tab:'overview', pchat:null, doc:null, rel:null, relQ:'', inspector: window.innerWidth > 1180, busy:null };
+const proj = () => S.projects.find(p => p.id === state.project);
+const DEFAULT_PREFS = { theme:'system', enterSends:true, fhp:true, routeLabels:true, model:'auto', shareRelated:true, dictLang:(navigator.language || 'en-US') };
+const prefs = () => (S.profile.prefs = { ...DEFAULT_PREFS, ...(S.profile.prefs || {}) });
+function setPref(k, v){ prefs()[k] = v; save(null); applyPrefs(); render(); }
+const hostTheme = document.documentElement.getAttribute('data-theme');
+function applyPrefs(){
+  const t = prefs().theme, de = document.documentElement;
+  if (t === 'system'){ if (hostTheme) de.setAttribute('data-theme', hostTheme); else de.removeAttribute('data-theme'); }
+  else de.setAttribute('data-theme', t);
+  $('#app').classList.toggle('no-routes', !prefs().routeLabels);
+}
+const KIND = {
+  chat:{ name:'Chat', icon:'chat', cls:'k-chat', title:null, place:'Ask Akira anything' },
+  research:{ name:'Research', icon:'search', cls:'k-research', title:'Research', place:'What should Akira research?', blurb:'Ask a question worth digging into. Akira plans the sub-questions, works through each one, and writes a structured brief. It draws on Akira’s own knowledge; this preview can’t browse the web.',
+    ex:[['Compare heat pumps and gas furnaces for a cold climate','Heat pumps vs gas'],['What does the research say about the four-day work week?','Four-day week'],['History and causes of the 2008 financial crisis','The 2008 crisis']] },
+  image:{ name:'Image', icon:'image', cls:'k-image', title:'Image generation', place:'Describe the image you want', blurb:'Describe what you want to see. Arc creates it, and you can keep refining: “warmer light”, “more cinematic”, “add a moon”.',
+    ex:[['A cinematic poster of a lighthouse at dusk','Lighthouse poster'],['A minimal logo for a coffee shop called Nile','Coffee shop logo'],['A cozy reading nook with rain on the window','Reading nook']] },
+  code:{ name:'Code', icon:'code', cls:'k-code', title:'Code', place:'Paste code or describe what you need', blurb:'Paste code, an error, or describe what you’re building. Una writes, fixes and explains it.',
+    ex:[['Write a Python function that removes duplicate lines from a file but keeps their order','Remove duplicate lines'],['Fix this and explain why it fails:\n\nfunction avg(xs) { return xs.reduce((a, b) => a + b) / xs.length }\n\navg([]) throws a TypeError','Fix a function'],['Explain what this regex does: ^(?=.*\\d)(?=.*[a-z]).{8,}$','Explain a regex']] },
+};
+const curKind = () => { const c = S.chats.find(x => x.id === state.chat); return c ? (c.kind || 'chat') : state.newKind; };
+const pSources = pid => S.sources.filter(s => s.projectId === pid).sort((a,b) => a.created - b.created);
+const pDocs = pid => S.docs.filter(d => d.projectId === pid).sort((a,b) => b.updated - a.updated);
+const pChats = pid => S.pchats.filter(c => c.projectId === pid).sort((a,b) => b.updated - a.updated);
+
+/* ============ Akira intelligence ============ */
+const FAMILIES = {
+  core: { name:'Core', role:'General intelligence for everyday help, reasoning and writing.', tiers:['Standard','Pro','Ultra'], color:'var(--c-core)', icon:'spark' },
+  arc:  { name:'Arc',  role:'Images, visual concepts and editing.', tiers:['Lite','General','Max'], color:'var(--c-arc)', icon:'image' },
+  una:  { name:'Una',  role:'Writing, fixing and explaining code.', tiers:['Lite','General','Max'], color:'var(--c-una)', icon:'code' },
+  live: { name:'Live', role:'Real-time voice conversation. Interrupt, change direction, keep talking.', tiers:['Lite','General','Max'], color:'var(--c-live)', icon:'wave', soon:true },
+  cast: { name:'Cast', role:'Real-time voice and vision. Show Akira what’s around you.', tiers:['Lite','General','Max'], color:'var(--c-cast)', icon:'camera', soon:true },
+};
+const TIER_NOTES = { Standard:'Fast everyday answers', Pro:'Reasoning, planning and writing', Ultra:'Large projects and in-depth work' };
+/* Until the Akira models are connected, cloud work runs on Claude at a matching effort level. */
+const BACKEND = { Standard:'quick', Lite:'quick', Pro:'default', General:'default', Ultra:'complex', Max:'complex' };
+const WHERE = { local:{ label:'On device', icon:'device' }, cloud:{ label:'Cloud', icon:'cloud' }, both:{ label:'Device + Cloud', icon:'sync' } };
+const TYPE = { chat:{ name:'Chat', icon:'chat', color:'var(--c-core)', n:'C' }, memory:{ name:'Memory', icon:'brain', color:'var(--c-live)', n:'M' }, source:{ name:'Source', icon:'doc', color:'var(--c-una)', n:'S' }, doc:{ name:'Document', icon:'doc', color:'var(--c-arc)', n:'D' }, task:{ name:'Task', icon:'check', color:'var(--orange)', n:'T' }, pchat:{ name:'Conversation', icon:'chat', color:'var(--c-cast)', n:'C' } };
+
+const RX = {
+  time: /\b(today|tonight|yesterday|tomorrow|this (morning|afternoon|evening|week|weekend|month)|last (night|week|weekend|month|year|monday|tuesday|wednesday|thursday|friday|saturday|sunday)|the other day|recently|earlier today|next (week|month|monday|tuesday|wednesday|thursday|friday|saturday|sunday)|on (monday|tuesday|wednesday|thursday|friday|saturday|sunday))\b/i,
+  about: /\babout (?:the |that |my |a |an |our )?([a-z0-9][\w'’ -]{1,40}?)(?=[,.?!;]|$|\s(?:from|in|on|that|which|we|i|you|last|yesterday|the other|before|after))/i,
+  arc: /\b(draw|sketch|illustrat\w*|images?|pictures?|logo|icon|poster|wallpaper|visuali[sz]e|render|mock-?up|cinematic|moodboard|artwork|graphic|make (it|this) look)\b/i,
+  una: /```|\b(function|const|def|class|import|console\.log|print\(|npm|pip|regex|bugs?|stack ?trace|exception|compile|syntax error|typescript|javascript|python|swift|kotlin|java|c\+\+|rust|golang|html|css|sql|json|api|refactor|unit tests?|code|script)\b/i,
+  live: /\b(let'?s talk|can we talk|talk to me|voice (chat|mode)|out loud|speak to me|go live|call me)\b/i,
+  cast: /\b(camera|look at this|see this|show you something|video call|what am i looking at|point my)\b/i,
+  deep: /\b(deep(ly)?|thorough(ly)?|in[- ]depth|comprehensive|exhaustive|research)\b/i,
+  pro: /\b(why|explain|plan|compare|analy[sz]e|strategy|steps|pros and cons|decide|evaluate|write|draft|essay|summari[sz]e|outline|review)\b/i,
+  search: /^(find|search( for)?|show( me)?|look up|list)\b.*\b(chats?|conversations?|notes?|memor(y|ies)|projects?|documents?|docs?|sources?|tasks?)\b|^what did i (say|ask|write|talk about)\b/i,
+  clock: /\b(what time is it|current time|what('?s| is) (the )?(date|day)( today)?|today'?s date)\b/i,
+  deviceVerb: /\b(find|show|search|open|check|read|pull up|what did|what was|when is|when'?s|what'?s on|do i have|who is|turn (on|off)|set an?|text|call|send|play)\b/i,
+  compose: /\b(write|draft|compose|reword|rewrite|help me (write|reply|respond)|reply to)\b/i,
+};
+const APPS = [
+  ['Messages', /\b(messages?|texts?|imessage|sms|sent me)\b/i],
+  ['Mail', /\b(e-?mails?|inbox)\b/i],
+  ['Calendar', /\b(calendar|meetings?|appointments?|events?)\b/i],
+  ['Contacts', /\b(contacts?|phone number|address book)\b/i],
+  ['Photos', /\b(photos?|camera roll|screenshots?)\b/i],
+  ['Settings', /\b(wi-?fi|bluetooth|brightness|volume|dark mode|do not disturb|settings|alarm|timer)\b/i],
+];
+const STOP = new Set('the and for are but not you your yours with that this those these was were have has had what when where which who whom why how can could would should will shall about from into onto than then them they their there here our ours out over under again also just very really some any all each more most other such only own same too off once does did doing done being been its it’s it\'s i’m i\'m me my mine we us his her hers him she he let lets make made like want need please help tell show find search look give get got thing things something anything stuff one two way know think chat chats note notes document documents doc docs source sources project projects task tasks memory memories conversation conversations mention mentioned related akira'.split(' '));
+const CAPSTOP = new Set('The This That These Those A An I It Its In On At For And But Or If When What Why How Who Where Which Here There Yes No You We They He She My Your Our Their Me Us Them Akira Today Tomorrow Yesterday Tonight Monday Tuesday Wednesday Thursday Friday Saturday Sunday January February March April May June July August September October November December Also Then So Ready Note Next Goal Audience Rules Sources Source Document Documents Tasks Task Project Projects Overview Hi Hello Hey Thanks Thank Please Let Sure Step Use Try Each Some All Any One Two Three First Second Third Finally However Because Once After Before While With Without From To Of As By Is Are Be Do Does Did Can Could Would Should Will Just Not Keep Make Add Ask Write Start Open Remove Stopped Done Good Great Okay OK Markdown Reply Found Nothing Instead Both Most Many More Less Other Another Every Only Even Still Maybe Perhaps Overall Key Option Options Example Examples Summary Tip Tips Pros Cons Plan Idea Ideas Answer Question Questions Code Image Core Standard Pro Ultra Lite General Max Cloud Local Device Arc Una Live Cast Remembered Added Created Stir Mix Remember Don’t Don\'t Isn’t I’m I\'m I’ll I\'ll It’s It\'s That’s Here’s Here\'s What’s There’s'.split(' '));
+
+function names(t){
+  const out = [], toks = t.split(/\s+/);
+  for (let i = 1; i < toks.length; i++){
+    const w = toks[i].replace(/[^\w’'-]/g, '').replace(/(’|')s$/, '');
+    if (/^[A-Z][a-z’'-]{1,}$/.test(w) && !CAPSTOP.has(w) && !/[.!?]$/.test(toks[i-1]) && !out.includes(w)) out.push(w);
+  }
+  return out.slice(0, 3);
+}
+
+function evalMath(expr){
+  const src = expr.replace(/,/g, '').replace(/(\d)\s*x\s*(?=[\d(])/gi, '$1*').replace(/×/g, '*').replace(/÷/g, '/').replace(/\^/g, '**').replace(/\s+/g, '');
+  let i = 0;
+  const peek = () => src[i];
+  const num = () => { const m = src.slice(i).match(/^\d*\.?\d+(e[+-]?\d+)?/i); if (!m) throw 0; i += m[0].length; return parseFloat(m[0]); };
+  const post = v => { if (peek() === '%'){ i++; return v / 100; } return v; };
+  const factor = () => { if (peek() === '-'){ i++; return -factor(); } if (peek() === '+'){ i++; return factor(); } if (peek() === '('){ i++; const v = sum(); if (src[i++] !== ')') throw 0; return post(v); } return post(num()); };
+  const power = () => { const b = factor(); if (src.slice(i, i+2) === '**'){ i += 2; return Math.pow(b, power()); } return b; };
+  const term = () => { let v = power(); while ((peek() === '*' && src[i+1] !== '*') || peek() === '/'){ const op = src[i++]; const r = power(); v = op === '*' ? v * r : v / r; } return v; };
+  const sum = () => { let v = term(); while (peek() === '+' || peek() === '-'){ const op = src[i++]; const r = term(); v = op === '+' ? v + r : v - r; } return v; };
+  const v = sum(); if (i !== src.length) throw 0; return v;
+}
+function calcLocal(t){
+  const s = t.toLowerCase().replace(/^(hey akira,?\s*)?(what('?s| is)|calculate|compute|how much is|solve)\s*/, '').replace(/[?=!.]+\s*$/, '').trim();
+  const m = s.match(/^(\d[\d,]*(?:\.\d+)?)\s*%\s*of\s*(\d[\d,]*(?:\.\d+)?)$/);
+  if (m){ const a = +m[1].replace(/,/g,''), b = +m[2].replace(/,/g,''); return { expr:`${m[1]}% of ${m[2]}`, value:a * b / 100 }; }
+  if (!/^[\d\s+\-*/().,%^×÷x]+$/.test(s) || !/\d/.test(s) || !/[+\-*/^×÷x%]/.test(s.replace(/^-/, ''))) return null;
+  if (/^\d+(-\d+)+$/.test(s)) return null;
+  try { const v = evalMath(s); return isFinite(v) ? { expr:s, value:v } : null; } catch { return null; }
+}
+const fmtNum = v => Number.isInteger(v) ? v.toLocaleString() : (+v.toPrecision(12)).toLocaleString(undefined, { maximumFractionDigits:10 });
+
+/* Local Access Center: everything the device can search without the cloud */
+function corpus(space, includeCurrent){
+  if (space === 'akira') return [
+    ...S.chats.filter(c => includeCurrent || c.id !== state.chat).map(c => ({ type:'chat', id:c.id, title:c.title, text:c.msgs.map(m => m.content).join('\n') })),
+    ...S.profile.memory.map(m => ({ type:'memory', id:m.id, title:m.text, text:m.text }))
+  ];
+  const p = proj(); if (!p) return [];
+  return [
+    ...pSources(p.id).map((s, i) => ({ type:'source', id:s.id, title:s.name, label:'S' + (i+1), text:s.text })),
+    ...pDocs(p.id).map(d => ({ type:'doc', id:d.id, title:d.title || 'Untitled', text:d.body || '' })),
+    ...(p.tasks || []).map(t => ({ type:'task', id:t.id, title:t.title, text:t.title })),
+    ...pChats(p.id).filter(c => includeCurrent || c.id !== state.pchat).map(c => ({ type:'pchat', id:c.id, title:c.title, text:c.msgs.map(m => m.content).join('\n') }))
+  ];
+}
+const terms = q => [...new Set((q.toLowerCase().match(/[a-z0-9][a-z0-9'’-]{2,}/g) || []).filter(w => !STOP.has(w)))];
+function related(q, space, limit = 5, includeCurrent = false){
+  const ts = terms(q); if (!ts.length) return [];
+  const need = Math.min(2, ts.length);
+  return corpus(space, includeCurrent).map(it => {
+    const tl = it.title.toLowerCase(), xl = it.text.toLowerCase();
+    let s = 0, hits = 0, first = -1;
+    for (const w of ts){
+      const a = tl.includes(w), at = xl.indexOf(w);
+      if (a || at >= 0){ hits++; s += (a ? 3 : 0) + (at >= 0 ? 1 : 0); if (at >= 0 && (first < 0 || at < first)) first = at; }
+    }
+    return { ...it, score:s, hits, first };
+  }).filter(x => x.hits >= need).sort((a, b) => b.score - a.score).slice(0, limit);
+}
+function snippet(it, n = 160){
+  const t = it.text.replace(/\s+/g, ' ');
+  if (it.first == null || it.first < 0) return trunc(t, n);
+  const start = Math.max(0, it.first - 50);
+  return (start ? '…' : '') + trunc(t.slice(start), n);
+}
+
+/* Alternate Protocol: decide intelligence, tier, and local vs cloud */
+function understand(text, space, kind){
+  const t = text.trim(), sig = [], why = [];
+  names(t).forEach(p => sig.push({ k:'person', label:p }));
+  const about = t.match(RX.about); if (about) sig.push({ k:'topic', label:about[1].trim() });
+  const time = t.match(RX.time); if (time) sig.push({ k:'time', label:time[0] });
+  const r = { family:'core', tier:'Standard', where:'cloud', sig, why, local:null, tierWhy:'' };
+  if (kind === 'image'){ r.family = 'arc'; r.tier = 'General'; why.push('This is an Image chat, so Arc handles it.'); r.tierWhy = 'Arc General fits most images.'; return r; }
+  if (kind === 'code'){ r.family = 'una'; r.tier = t.length > 1500 ? 'Max' : 'General'; why.push('This is a Code chat, so Una handles it.'); r.tierWhy = r.tier === 'Max' ? 'It’s large, so Una Max.' : 'Una General fits a typical coding request.'; return r; }
+  if (kind === 'research'){ r.research = true; r.tier = RX.deep.test(t) ? 'Ultra' : 'Pro'; why.push('This is a Research chat, so Core plans the questions and writes a brief.'); r.tierWhy = r.tier === 'Ultra' ? 'You asked for depth, so Core Ultra.' : 'Research needs reasoning, so Core Pro.'; return r; }
+  const app = APPS.find(a => a[1].test(t));
+  const math = calcLocal(t);
+  if (math){ r.where = 'local'; r.local = { kind:'calc', ...math }; sig.unshift({ k:'app', label:'Calculator' }); why.push('This is arithmetic, so the device calculator answers it. Nothing goes to the cloud.'); return r; }
+  if (RX.clock.test(t)){ r.where = 'local'; r.local = { kind:'clock' }; sig.unshift({ k:'app', label:'Clock' }); why.push('The time and date come straight from this device.'); return r; }
+  if (RX.search.test(t)){ r.where = 'local'; r.local = { kind:'search' }; sig.unshift({ k:'app', label:'Search' }); why.push('Searching your own chats and notes happens on this device.'); return r; }
+  if (app && RX.deviceVerb.test(t) && !RX.compose.test(t)){ r.where = 'local'; r.local = { kind:'app', app:app[0] }; sig.unshift({ k:'app', label:app[0] }); why.push(`${app[0]} lives on your device, so the Local Access Center handles this.`); return r; }
+  if (RX.cast.test(t)){ r.family = 'cast'; r.tier = 'General'; r.where = 'both'; r.local = { kind:'soon' }; why.push('Seeing your surroundings needs Cast, Akira’s real-time voice and vision.'); return r; }
+  if (RX.live.test(t)){ r.family = 'live'; r.tier = 'General'; r.where = 'both'; r.local = { kind:'soon' }; why.push('Talking in real time needs Live, Akira’s real-time voice.'); return r; }
+  if (app) sig.unshift({ k:'app', label:app[0] });
+  if (/```/.test(t) || (RX.una.test(t) && !RX.arc.test(t))){
+    r.family = 'una';
+    r.tier = (t.length > 1500 || /\b(architecture|entire|whole (app|codebase)|from scratch)\b/i.test(t)) ? 'Max' : t.length < 90 ? 'Lite' : 'General';
+    why.push('This is a coding task, so Akira uses Una.');
+    r.tierWhy = r.tier === 'Max' ? 'It’s large, so Una Max.' : r.tier === 'Lite' ? 'It’s short, so Una Lite is enough.' : 'Una General fits a typical coding request.';
+  } else if (RX.arc.test(t)){
+    r.family = 'arc';
+    r.tier = /\b(detailed|high detail|polished|final)\b/i.test(t) ? 'Max' : /\b(quick|rough|simple)\b/i.test(t) ? 'Lite' : 'General';
+    why.push('This is visual work, so Akira uses Arc.');
+  } else {
+    const p = space === 'workspace' && proj();
+    const big = p && pSources(p.id).reduce((n, s) => n + (s.words || 0), 0) > 40000;
+    if (big || RX.deep.test(t)){ r.tier = 'Ultra'; r.tierWhy = big ? 'This project holds a lot of material, so Core Ultra.' : 'You asked for in-depth work, so Core Ultra.'; }
+    else if (RX.pro.test(t) || t.length > 160 || space === 'workspace'){ r.tier = 'Pro'; r.tierWhy = 'This needs reasoning or writing, so Core Pro.'; }
+    else r.tierWhy = 'A quick question, so Core Standard: the fastest option.';
+  }
+  return r;
+}
+function plan(text, space){
+  const kind = space === 'akira' ? curKind() : 'chat';
+  const r = understand(text, space, kind);
+  const m = prefs().model;
+  if (!(r.local && r.local.kind !== 'soon')){
+    if (m !== 'auto'){
+      const map = { Standard:['Standard','Lite'], Pro:['Pro','General'], Ultra:['Ultra','Max'] }[m];
+      r.tier = r.family === 'core' ? map[0] : map[1];
+      r.why.push(`You chose ${m} in the model menu, so ${FAMILIES[r.family].name} ${r.tier}.`);
+    } else if (r.tierWhy) r.why.push(r.tierWhy);
+  }
+  r.refs = r.local || !prefs().shareRelated || kind !== 'chat' ? [] : related(text, space, 4);
+  if (!r.local){
+    if (space === 'workspace' && proj() && pSources(proj().id).length){ r.where = 'both'; r.why.push('The project’s sources are read on the device and sent with your request.'); }
+    else if (r.refs.length){ r.where = 'both'; r.why.push(`The device found ${r.refs.length} related item${r.refs.length > 1 ? 's' : ''} and sent ${r.refs.length > 1 ? 'them' : 'it'} along.`); }
+    else r.why.push('Nothing on the device was needed, so this goes straight to the cloud.');
+  }
+  return r;
+}
+function routeLabel(r){
+  if (r.local && r.local.kind !== 'soon') return 'Local Access Center';
+  const f = FAMILIES[r.family]; return `${f.name} ${r.tier}`;
+}
+function routeColor(r){ return r.local && r.local.kind !== 'soon' ? 'var(--label-3)' : FAMILIES[r.family].color; }
+
+/* Natural-language chat search */
+const MONTHS = ['january','february','march','april','may','june','july','august','september','october','november','december'];
+const DAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+function parseSearch(q){
+  let s = ' ' + q.toLowerCase().replace(/[“”"?.!,]/g, ' ') + ' ';
+  const f = { kind:null, from:0, to:Infinity, labels:[], terms:[] };
+  const day0 = d => { const x = new Date(d); x.setHours(0,0,0,0); return x.getTime(); };
+  const today = day0(Date.now()), D = 864e5;
+  const take = (re, fn) => { const m = s.match(re); if (m){ fn(m); s = s.replace(m[0], ' '); return true; } return false; };
+  take(/\b(images?|pictures?|drawings?|posters?|logos?|art|arc)\b/, () => { f.kind = 'image'; f.labels.push(['image','Images']); })
+  || take(/\b(code|coding|programming|scripts?|functions?|una)\b/, () => { f.kind = 'code'; f.labels.push(['code','Code']); })
+  || take(/\b(research|reports?|briefs?|deep dives?)\b/, () => { f.kind = 'research'; f.labels.push(['search','Research']); });
+  const range = (a, b, label) => { f.from = a; f.to = b; f.labels.push(['clock', label]); };
+  take(/\btoday\b/, () => range(today, Infinity, 'Today'))
+  || take(/\byesterday\b/, () => range(today - D, today, 'Yesterday'))
+  || take(/\b(past|last) (\d+) days\b/, m => range(today - (+m[2]) * D, Infinity, `Past ${m[2]} days`))
+  || take(/\b(\d+) days ago\b/, m => range(today - (+m[1]) * D, today - (+m[1] - 1) * D, `${m[1]} days ago`))
+  || take(/\b(this|past) week\b/, () => { const wd = (new Date().getDay() + 6) % 7; range(today - wd * D, Infinity, 'This week'); })
+  || take(/\blast week\b/, () => { const wd = (new Date().getDay() + 6) % 7, start = today - wd * D; range(start - 7 * D, start, 'Last week'); })
+  || take(/\bthis month\b/, () => { const d = new Date(); range(new Date(d.getFullYear(), d.getMonth(), 1).getTime(), Infinity, 'This month'); })
+  || take(/\blast month\b/, () => { const d = new Date(); range(new Date(d.getFullYear(), d.getMonth() - 1, 1).getTime(), new Date(d.getFullYear(), d.getMonth(), 1).getTime(), 'Last month'); })
+  || take(/\b(recent(ly)?|lately|the other day)\b/, () => range(today - 7 * D, Infinity, 'Recently'))
+  || take(new RegExp('\\b(on |last )?(' + DAYS.join('|') + ')\\b'), m => { const want = DAYS.indexOf(m[2]); let back = (new Date().getDay() - want + 7) % 7; if (m[1] && m[1].trim() === 'last' && back === 0) back = 7; const a = today - back * D; range(a, a + D, m[2][0].toUpperCase() + m[2].slice(1)); })
+  || take(new RegExp('\\b(in )?(' + MONTHS.join('|') + ')\\b'), m => { const mi = MONTHS.indexOf(m[2]), d = new Date(); let y = d.getFullYear(); if (mi > d.getMonth()) y--; range(new Date(y, mi, 1).getTime(), new Date(y, mi + 1, 1).getTime(), m[2][0].toUpperCase() + m[2].slice(1)); });
+  s = s.replace(/\b(show|find|search|look|list|get|me|my|the|a|an|all|any|chats?|conversations?|messages?|threads?|from|about|on|in|where|when|i|we|you|asked|talked|said|discussed|wrote|made|did|was|were|that|with|regarding|related|to|for|of|ones?|stuff|things?)\b/g, ' ');
+  f.terms = terms(s);
+  if (f.terms.length) f.labels.push(['tag', f.terms.join(' ')]);
+  return f;
+}
+function searchChats(q){
+  const f = parseSearch(q);
+  let list = S.chats.filter(c => (!f.kind || (c.kind || 'chat') === f.kind) && (c.created || c.updated) < f.to && c.updated >= f.from);
+  if (f.terms.length){
+    list = list.map(c => {
+      const tl = c.title.toLowerCase(), xl = c.msgs.map(m => m.content).join('\n').toLowerCase();
+      let score = 0, hits = 0;
+      f.terms.forEach(w => { const stem = w.length > 4 ? w.replace(/(ing|ed|es|s)$/, '') : w; const a = tl.includes(stem), b = xl.includes(stem); if (a || b){ hits++; score += (a ? 3 : 0) + (b ? 1 : 0); } });
+      return { c, score, hits };
+    }).filter(x => x.hits).sort((a, b) => b.hits - a.hits || b.score - a.score).map(x => x.c);
+  } else list.sort((a, b) => b.updated - a.updated);
+  return { f, list };
+}
+async function askSearch(){
+  const q = $('#q').value.trim(); if (!q || !sample) return;
+  state.searchAI = { q, busy:true, ids:[] }; renderSidebar();
+  const lines = [...S.chats].sort((a, b) => b.updated - a.updated).slice(0, 80).map(c => `${c.id} | ${KIND[c.kind || 'chat'].name} | ${new Date(c.updated).toDateString()} | ${c.title} | ${preview(c).slice(0, 240).replace(/\s+/g, ' ')}`).join('\n');
+  try {
+    const ids = await sample.json(`Today is ${new Date().toDateString()}. Find the chats that match this request: "${q}"\n\nChats (id | kind | last active | title | latest text):\n${lines}\n\nReply with only a JSON array of the matching ids, best match first. Reply [] if none match.`, { modelTier:'quick' });
+    state.searchAI = { q, busy:false, ids: Array.isArray(ids) ? ids.map(String).filter(id => S.chats.some(c => c.id === id)) : [] };
+  } catch (e) { state.searchAI = null; if (e.code !== 'cancelled') toast(errText(e)); }
+  renderSidebar();
+}
+
+/* Relations & References: entities that link items together */
+function entities(space){
+  const map = new Map();
+  for (const it of corpus(space, true)){
+    const key = it.type + ':' + it.id;
+    const text = (it.title + '. ' + it.text).slice(0, 80000);
+    const re = /\b[A-Z][\w’'-]*(?:\s+[A-Z][\w’'-]*){0,2}/g;
+    let m;
+    while ((m = re.exec(text))){
+      let ws = m[0].split(/\s+/).map(w => w.replace(/(’|')s$/, ''));
+      while (ws.length && CAPSTOP.has(ws[0])) ws.shift();
+      while (ws.length && CAPSTOP.has(ws[ws.length-1])) ws.pop();
+      if (!ws.length) continue;
+      const name = ws.join(' ');
+      if (name.length < 3 || /^S\d+$/.test(name) || /^\d/.test(name)) continue;
+      const lk = name.toLowerCase();
+      if (!map.has(lk)) map.set(lk, { name, items:new Map(), count:0 });
+      const e = map.get(lk); e.count++;
+      if (!e.items.has(key)) e.items.set(key, { ...it, first: m.index - it.title.length - 2 });
+    }
+  }
+  return [...map.values()].filter(e => e.items.size >= 2 || e.count >= 3).sort((a, b) => b.items.size - a.items.size || b.count - a.count).slice(0, 80);
+}
+
+/* ============ render ============ */
+function render(){
+  const app = $('#app'), ws = state.space === 'workspace';
+  app.dataset.space = state.space;
+  document.querySelectorAll('[data-act="space"]').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === state.space));
+  $('#brandName').textContent = ws ? 'Akira Workspace' : 'Akira';
+  $('#brandSub').textContent = ws ? 'Projects and focused work' : 'Home · everyday help';
+  $('#brandMark').innerHTML = ic(ws ? 'stack' : 'spark');
+  $('#spaceTag').innerHTML = ic(ws ? 'stack' : 'home') + (ws ? 'Workspace' : 'Home');
+  $('#q').placeholder = ws ? 'Search projects' : 'Search, e.g. “code from last week”';
+  $('#sbNewLabel').textContent = ws ? 'New project' : 'New chat';
+  $('#kinds').hidden = ws;
+  const inSet = state.view === 'settings';
+  $('#setBtn').setAttribute('aria-current', inSet);
+  document.querySelectorAll('.kind-btn').forEach(b => b.setAttribute('aria-current', !inSet && !ws && !state.chat && state.newKind === b.dataset.v));
+  document.querySelectorAll('[data-act="space"]').forEach(b => { if (inSet) b.closest('.tabbar') && b.setAttribute('aria-pressed', false); });
+  $('#tabSet').setAttribute('aria-pressed', inSet);
+  $('#savedMode').innerHTML = ic('cloud') + `<span>${mode === 'account' ? 'Saved to your account' : mode === 'browser' ? 'Saved in this browser only' : 'Loading…'}</span>`;
+  renderSidebar();
+  if (inSet) renderSettings(); else if (ws) renderWorkspace(); else renderHome();
+  renderInspector();
+  renderComposer();
+}
+
+function renderSidebar(){
+  const q = $('#q').value.trim().toLowerCase();
+  let h = '';
+  if (state.space === 'akira'){
+    const rowFor = c => { const k = KIND[c.kind || 'chat']; return `<button class="row" data-act="openChat" data-id="${c.id}" aria-current="${state.view === 'main' && c.id === state.chat}">
+      <span class="row-ic kind">${ic(k.icon).replace('class="i"', `class="i ${k.cls}"`)}</span>
+      <span class="row-body"><span class="row-title">${esc(c.title)}</span><span class="row-sub">${esc(preview(c))}</span></span>
+      <span class="row-meta">${when(c.updated)}</span></button>`; };
+    if (!S.chats.length) h += `<div class="sb-empty">Your chats will appear here. Research, Image and Code each get their own dedicated chats.</div>`;
+    else if (q){
+      const { f, list } = searchChats(q);
+      h += `<div class="qchips">${f.labels.map(([i, l]) => `<span class="qchip">${ic(i)}${esc(l)}</span>`).join('')}</div>`;
+      const ai = state.searchAI && state.searchAI.q === $('#q').value.trim() ? state.searchAI : null;
+      if (ai && !ai.busy){
+        h += `<div class="sb-section">Akira’s matches</div>` + (ai.ids.length ? ai.ids.map(id => rowFor(S.chats.find(c => c.id === id))).join('') : `<div class="sb-empty">Akira didn’t find a match.</div>`);
+      } else {
+        h += list.length ? list.map(rowFor).join('') : `<div class="sb-empty">No chats match.</div>`;
+      }
+      if (sample) h += `<button class="ask-search" data-act="askSearch" ${ai && ai.busy ? 'disabled' : ''}>${ic('spark')}${ai && ai.busy ? 'Akira is searching…' : 'Ask Akira to search'}</button>`;
+    } else {
+      const sorted = [...S.chats].sort((a,b) => b.updated - a.updated);
+      [['chat','Chats'],['research','Research'],['image','Images'],['code','Code']].forEach(([k, label]) => {
+        const g = sorted.filter(c => (c.kind || 'chat') === k);
+        if (g.length) h += `<div class="sb-section">${label}</div>` + g.map(rowFor).join('');
+      });
+    }
+  } else {
+    const list = [...S.projects].sort((a,b) => b.updated - a.updated).filter(p => !q || (p.name + ' ' + (p.desc||'')).toLowerCase().includes(q));
+    if (S.projects.length) h += `<div class="sb-section">Projects</div>`;
+    h += list.map(p => `<button class="row" data-act="openProject" data-id="${p.id}" aria-current="${p.id===state.project}">
+      <span class="row-ic proj" style="background:${p.color}">${esc(p.name.trim()[0]?.toUpperCase() || 'P')}</span>
+      <span class="row-body"><span class="row-title">${esc(p.name)}</span><span class="row-sub">${esc(p.desc || projSummary(p))}</span></span>
+      <span class="row-meta">${when(p.updated)}</span></button>`).join('');
+    if (!S.projects.length) h += `<div class="sb-empty">Projects keep their own files, tasks and conversations, separate from Home.</div>`;
+    else if (!list.length) h += `<div class="sb-empty">No projects match “${esc(q)}”.</div>`;
+  }
+  $('#sbList').innerHTML = h;
+}
+function preview(c){ const last = [...c.msgs].reverse().find(m => m.content); return last ? last.content.replace(/```[\s\S]*?(```|$)/g, ' ').replace(/\*\*|[#`>\n]+/g,' ').replace(/\s+/g,' ').trim() || 'Image' : 'New chat'; }
+function projSummary(p){ const n = pSources(p.id).length, t = (p.tasks||[]).filter(x => !x.done).length; return `${n} source${n===1?'':'s'} · ${t} open task${t===1?'':'s'}`; }
+
+function routePill(m, i, ctx){
+  if (!m.route) return '';
+  const w = WHERE[m.route.where] || WHERE.cloud;
+  return `<button class="route" data-act="why" data-ctx="${ctx}" data-i="${i}" aria-label="Why Akira chose this"><i style="background:${routeColor(m.route)}"></i>${esc(routeLabel(m.route))} · ${ic(w.icon)}${w.label}</button>`;
+}
+function refsHTML(refs){
+  if (!refs || !refs.length) return '';
+  return `<div class="refs"><span>References</span>${refs.map(r => `<button class="ref" data-act="openRef" data-type="${r.type}" data-id="${r.id}">${ic(TYPE[r.type].icon)}<span>${esc(r.label ? r.label + ' · ' + r.title : r.title)}</span></button>`).join('')}</div>`;
+}
+function msgHTML(m, i, ctx){
+  if (m.role === 'user') return `<div class="msg user"><div class="bubble">${esc(m.content)}</div></div>`;
+  const body = m.content ? `<div class="md">${arcify(m.content)}</div>` : (m.error || (m.plan && m.plan.phase === 'planning') ? '' : `<div class="typing" aria-label="Akira is thinking"><i></i><i></i><i></i></div>`);
+  const pl = m.plan ? `<div class="rplan">${m.plan.phase === 'planning' ? `<h4>${ic('search')}Planning the research…</h4><div class="typing"><i></i><i></i><i></i></div>`
+    : `<h4>${ic('search')}${m.plan.phase === 'done' ? `Researched ${m.plan.steps.length} questions` : `Working through ${m.plan.steps.length} questions…`}</h4>${m.plan.steps.map(x => `<div class="rstep ${m.plan.phase === 'done' ? 'done' : ''}">${ic(m.plan.phase === 'done' ? 'check' : 'clock')}<span>${esc(x)}</span></div>`).join('')}`}</div>` : '';
+  const acts = (m.actions || []).map((a, j) => {
+    const undo = `<button class="link" data-act="undoAction" data-ctx="${ctx}" data-i="${i}" data-j="${j}">${a.kind === 'memory' ? 'Forget' : 'Undo'}</button>`;
+    if (a.kind === 'memory') return `<div class="note ${a.undone?'gone':''}">${ic('brain')}Remembered: ${esc(a.text)}${a.undone ? '' : undo}</div>`;
+    if (a.kind === 'task') return `<div class="note ${a.undone?'gone':''}">${ic('check')}Added task: ${esc(a.text)}${a.undone ? '' : undo}</div>`;
+    if (a.kind === 'doc') return `<div class="note ${a.undone?'gone':''}">${ic('doc')}Created document: ${esc(a.text)}${a.undone ? '' : `<button class="link" data-act="openDoc" data-id="${a.ref}">Open</button>${undo}`}</div>`;
+    return '';
+  }).join('');
+  const cta = m.liveCta ? `<div class="btns"><button class="btn primary" data-act="live">${ic('wave')}Preview Live and Cast</button></div>` : '';
+  const err = m.error ? `<div class="err" role="alert">${esc(m.error)}</div>` : '';
+  return `<div class="msg" id="${ctx}-m${i}"><span class="av">${ic('spark')}</span><div class="reply"><span class="who">Akira ${routePill(m, i, ctx)}</span>${pl}${body}${acts}${refsHTML(m.refs)}${cta}${err}</div></div>`;
+}
+
+function greeting(){ const h = new Date().getHours(); return h < 5 ? 'Up late?' : h < 12 ? 'Good morning.' : h < 18 ? 'Good afternoon.' : 'Good evening.'; }
+
+function renderHome(){
+  $('#newBtn').setAttribute('aria-label', 'New chat');
+  const c = S.chats.find(x => x.id === state.chat);
+  const k = KIND[curKind()];
+  $('#tbTitle').textContent = c ? c.title : k.title ? 'New ' + k.name.toLowerCase() + ' chat' : 'New chat';
+  $('#tbSub').textContent = k.title ? 'Home · ' + k.name : 'Home';
+  $('#delBtn').hidden = !c; $('#delBtn').setAttribute('aria-label', 'Delete chat');
+  if (!c && k.title){
+    $('#view').innerHTML = `<div class="hello fadein"><div class="kind-mark">${ic(k.icon).replace('class="i"', `class="i ${k.cls}"`)}</div><h1>${k.title}</h1><p>${k.blurb}</p>
+      <div class="chips">${k.ex.map(([v, l]) => `<button class="chip" data-act="suggest" data-v="${esc(v)}">${ic(k.icon)}${esc(l)}</button>`).join('')}</div></div>`;
+    return;
+  }
+  if (!c){
+    $('#view').innerHTML = `<div class="hello fadein"><h1>${greeting()}</h1><p>Just say what you need. Akira picks the right intelligence for the job and decides whether to work on your device, in the cloud, or both. You’ll see what it chose as you type.</p>
+      <div class="chips">
+        <button class="chip" data-act="suggest" data-v="Help me plan a relaxed weekend with a small budget.">${ic('spark')}Plan my weekend</button>
+        <button class="chip" data-act="suggest" data-v="Draw a cinematic poster of a lighthouse at dusk.">${ic('image')}Draw a poster</button>
+        <button class="chip" data-act="suggest" data-v="Fix this function and explain why it was failing:\n\nfunction avg(xs) { return xs.reduce((a, b) => a + b) / xs.length }\n\navg([]) throws an error">${ic('code')}Fix some code</button>
+        <button class="chip" data-act="suggest" data-v="What's 18% of 240?">${ic('device')}Quick math</button>
+        <button class="chip" data-act="suggest" data-v="What was that message Thomas sent me about the movies the other day?">${ic('chat')}Find a message</button>
+      </div></div>`;
+    return;
+  }
+  $('#view').innerHTML = `<div class="thread">${c.msgs.map((m,i) => msgHTML(m, i, 'c')).join('')}</div>`;
+}
+
+function relationsHTML(space){
+  const ents = entities(space);
+  const scope = space === 'akira' ? 'chats and memory' : 'sources, documents, tasks and conversations';
+  if (!ents.length) return `<div class="empty"><b>Nothing connected yet</b><p>As names, places and projects come up in more than one of your ${scope}, Akira links them here.</p></div>`;
+  const q = state.relQ.toLowerCase();
+  const shown = ents.filter(e => !q || e.name.toLowerCase().includes(q));
+  const sel = ents.find(e => e.name === state.rel) || ents[0];
+  const items = [...sel.items.values()];
+  const co = new Map();
+  ents.forEach(e => { if (e === sel) return; let n = 0; e.items.forEach((_, k) => { if (sel.items.has(k)) n++; }); if (n) co.set(e.name, n); });
+  const coList = [...co.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
+  // radial graph
+  const W = 440, H = 290, cx = W/2, cy = 132, nodes = items.slice(0, 8);
+  const pos = nodes.map((_, i) => { const a = -Math.PI/2 + i * 2 * Math.PI / Math.max(nodes.length, 1); return [cx + Math.cos(a) * 160, cy + Math.sin(a) * 92]; });
+  const svg = `<svg class="graph" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(sel.name)} is connected to ${items.length} items">
+    ${pos.map(p => `<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}"/>`).join('')}
+    ${nodes.map((it, i) => `<g data-act="openRef" data-type="${it.type}" data-id="${it.id}"><title>${esc(TYPE[it.type].name + ': ' + it.title)}</title><circle cx="${pos[i][0].toFixed(1)}" cy="${pos[i][1].toFixed(1)}" r="15" style="fill:${TYPE[it.type].color}"/><text class="nt" x="${pos[i][0].toFixed(1)}" y="${(pos[i][1]+3.5).toFixed(1)}" text-anchor="middle">${esc(it.label || TYPE[it.type].n)}</text><text x="${pos[i][0].toFixed(1)}" y="${(pos[i][1]+29).toFixed(1)}" text-anchor="middle">${esc(trunc(it.title, 18))}</text></g>`).join('')}
+    <circle cx="${cx}" cy="${cy}" r="38" style="fill:var(--tint)"/><text class="ct" x="${cx}" y="${cy+4.5}" text-anchor="middle">${esc(trunc(sel.name, 11))}</text>
+  </svg>`;
+  return `<div class="rel">
+    <div class="panel rel-list"><input class="input" id="relQ" type="search" placeholder="Filter" value="${esc(state.relQ)}" aria-label="Filter relations">
+      ${shown.map(e => `<button class="ent" data-act="pickRel" data-v="${esc(e.name)}" aria-current="${e === sel}"><b>${esc(e.name)}</b><span>${e.items.size}</span></button>`).join('') || `<p class="muted" style="padding:6px 10px">No matches.</p>`}
+    </div>
+    <div class="panel">
+      <h3>${esc(sel.name)} <span class="stamp">${items.length} connected item${items.length === 1 ? '' : 's'} · ${sel.count} mention${sel.count === 1 ? '' : 's'}</span></h3>
+      ${svg}
+      ${coList.length ? `<div class="also">Also connected:${coList.map(([n]) => `<button data-act="pickRel" data-v="${esc(n)}">${esc(n)}</button>`).join('')}</div>` : ''}
+      <div class="list">${items.map(it => `<div class="li click" data-act="openRef" data-type="${it.type}" data-id="${it.id}"><span class="file-ic" style="background:${TYPE[it.type].color}">${esc(it.label || TYPE[it.type].n)}</span><div class="li-body"><div class="li-title">${esc(it.title)}</div><div class="snip">${esc(snippet(it, 150))}</div></div><span class="li-meta">${TYPE[it.type].name}</span></div>`).join('')}</div>
+    </div></div>`;
+}
+
+function renderWorkspace(){
+  const p = proj();
+  $('#newBtn').setAttribute('aria-label', 'New project');
+  $('#delBtn').hidden = true;
+  if (!p){
+    $('#tbTitle').textContent = 'All projects'; $('#tbSub').textContent = S.projects.length ? 'Choose a project' : 'No projects yet';
+    $('#view').innerHTML = `<div class="hello fadein"><h1>Workspace</h1><p>Give Akira a dedicated place for serious work. Each project holds its own sources, documents, tasks and conversations, and Akira keeps that context inside the project, apart from Home.</p>
+      <div class="chips"><button class="btn primary" data-act="newProject">${ic('plus')}New project</button></div></div>`;
+    return;
+  }
+  const tabs = [['overview','Overview'],['chat','Conversations', pChats(p.id).length],['docs','Documents', pDocs(p.id).length],['tasks','Tasks', (p.tasks||[]).filter(t=>!t.done).length],['sources','Sources', pSources(p.id).length],['relations','Relations']];
+  const tabName = tabs.find(t => t[0] === state.tab)[1];
+  $('#tbTitle').textContent = p.name; $('#tbSub').textContent = tabName;
+
+  if (state.tab === 'docs' && state.doc){ renderDocEditor(p); return; }
+
+  let h = `<div class="proj-head"><span class="proj-badge" style="background:${p.color}">${esc(p.name.trim()[0]?.toUpperCase() || 'P')}</span>
+    <div><div class="eyebrow">Project</div><h1>${esc(p.name)}</h1>${p.desc ? `<p>${esc(p.desc)}</p>` : ''}</div></div>
+    <div class="tabs" role="tablist">${tabs.map(t => `<button role="tab" data-act="tab" data-v="${t[0]}" aria-selected="${state.tab===t[0]}">${t[1]}${t[2] ? `<span class="n">${t[2]}</span>` : ''}</button>`).join('')}</div>`;
+
+  const tasks = p.tasks || [];
+  const open = tasks.filter(t => !t.done);
+  if (state.tab === 'overview'){
+    const srcs = pSources(p.id), docs = pDocs(p.id);
+    const w = srcs.reduce((n,s) => n + (s.words||0), 0);
+    h += `<div class="grid2">
+      <div class="panel wide"><div class="stats">
+        <div class="stat"><b>${srcs.length}</b><span>sources</span></div>
+        <div class="stat"><b>${w.toLocaleString()}</b><span>words of research</span></div>
+        <div class="stat"><b>${docs.length}</b><span>documents</span></div>
+        <div class="stat"><b>${open.length}</b><span>open tasks</span></div></div></div>
+      <div class="panel wide"><h3>Where things stand ${p.status ? `<span class="stamp">Updated ${when(p.status.at)}</span>` : ''}</h3>
+        ${p.status ? `<div class="md">${md(p.status.text)}</div>` : `<p class="muted">Ask Akira to read everything in this project and summarize where it stands.</p>`}
+        <div class="btns" style="margin-top:12px"><button class="btn ${p.status ? '' : 'primary'}" data-act="status" ${state.busy || !sample ? 'disabled' : ''}>${ic('spark')}${state.busy === 'status' ? 'Reading the project…' : p.status ? 'Refresh' : 'Get a status update'}</button></div>
+      </div>
+      <div class="panel"><h3>Up next <button class="link" data-act="tab" data-v="tasks">All tasks</button></h3>
+        ${open.length ? `<div class="list">${open.slice(0,4).map(t => taskRow(t)).join('')}</div>` : `<p class="muted">No open tasks.</p>`}</div>
+      <div class="panel"><h3>Recent documents <button class="link" data-act="tab" data-v="docs">All</button></h3>
+        ${docs.length ? `<div class="list">${docs.slice(0,4).map(d => `<div class="li click" data-act="openDoc" data-id="${d.id}"><span class="file-ic">DOC</span><div class="li-body"><div class="li-title">${esc(d.title || 'Untitled')}</div><div class="li-sub">Edited ${when(d.updated)}</div></div></div>`).join('')}</div>` : `<p class="muted">No documents yet.</p>`}</div>
+    </div>`;
+  } else if (state.tab === 'chat'){
+    const convos = pChats(p.id);
+    const cur = convos.find(c => c.id === state.pchat);
+    h += `<div class="convos"><button class="chip" data-act="newConvo">${ic('plus')}New conversation</button>${convos.map(c => `<button class="chip" data-act="openConvo" data-id="${c.id}" aria-current="${c.id===state.pchat}"><span>${esc(c.title)}</span></button>`).join('')}</div>`;
+    if (cur){
+      h += `<div class="thread">${cur.msgs.map((m,i) => msgHTML(m, i, 'p')).join('')}</div>`;
+      $('#delBtn').hidden = false; $('#delBtn').setAttribute('aria-label', 'Delete conversation');
+    } else {
+      h += `<div class="empty"><b>Ask about ${esc(p.name)}</b><p>Akira answers from this project’s sources and documents, cites them as S1, S2…, and can add tasks or draft documents for you.</p></div>`;
+    }
+  } else if (state.tab === 'docs'){
+    const docs = pDocs(p.id);
+    h += `<div class="addrow"><button class="btn primary" data-act="newDoc">${ic('plus')}New document</button></div>`;
+    h += docs.length ? `<div class="panel"><div class="list">${docs.map(d => `<div class="li click" data-act="openDoc" data-id="${d.id}"><span class="file-ic">DOC</span><div class="li-body"><div class="li-title">${esc(d.title || 'Untitled')}</div><div class="li-sub">${words(d.body||'').toLocaleString()} words · edited ${when(d.updated)}${d.byAkira ? ' · drafted by Akira' : ''}</div></div><button class="x" data-act="delDoc" data-id="${d.id}" aria-label="Delete ${esc(d.title)}">${ic('trash')}</button></div>`).join('')}</div></div>`
+      : `<div class="empty"><b>No documents yet</b><p>Write here, or ask Akira in Conversations to draft one from your sources.</p></div>`;
+  } else if (state.tab === 'tasks'){
+    h += `<form class="addrow" data-form="addTask"><input class="input" id="taskTitle" placeholder="Add a task" aria-label="Task" required><input class="input" type="date" id="taskDue" aria-label="Due date"><button class="btn primary">Add</button></form>`;
+    h += tasks.length ? `<div class="panel"><div class="list">${[...open, ...tasks.filter(t => t.done)].map(t => taskRow(t, true)).join('')}</div></div>`
+      : `<div class="empty"><b>No tasks yet</b><p>Add tasks here, or ask Akira to turn your notes into a to-do list.</p></div>`;
+  } else if (state.tab === 'relations'){
+    h += relationsHTML('workspace');
+  } else {
+    const srcs = pSources(p.id);
+    h += `<div class="drop" id="drop">${ic('upload')}<div>Drop text files here, or</div>
+      <div class="btns" style="justify-content:center"><button class="btn primary" data-act="upload">Choose files</button><button class="btn" data-act="pasteSource">Paste text</button></div>
+      <small>Plain text, Markdown, CSV, JSON and HTML. Sources stay on the device until Akira needs them for an answer.</small></div>`;
+    h += srcs.length ? `<div class="panel"><div class="list">${srcs.map((s,i) => `<div class="li"><span class="cite">S${i+1}</span><div class="li-body"><div class="li-title">${esc(s.name)}</div><div class="li-sub">${(s.words||0).toLocaleString()} words${s.trimmed ? ' · trimmed to fit' : ''} · added ${when(s.created)}</div></div><button class="x" data-act="delSource" data-id="${s.id}" aria-label="Remove ${esc(s.name)}">${ic('trash')}</button></div>`).join('')}</div></div>` : '';
+  }
+  $('#view').innerHTML = `<div>${h}</div>`;
+  const drop = $('#drop');
+  if (drop){
+    drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+    drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+    drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('over'); addFiles(e.dataTransfer.files); });
+  }
+}
+
+function taskRow(t, full){
+  return `<div class="li ${t.done?'is-done':''}"><button class="check" role="checkbox" aria-checked="${!!t.done}" data-act="toggleTask" data-id="${t.id}" aria-label="${esc(t.title)}"><svg class="i"><use href="#i-check"/></svg></button>
+    <div class="li-body"><div class="li-title">${esc(t.title)}</div></div>${t.due ? `<span class="tag ${['Today','Overdue'].includes(dueLabel(t.due)) && !t.done ? 'due' : ''}">${dueLabel(t.due)}</span>` : ''}
+    ${full ? `<button class="x" data-act="delTask" data-id="${t.id}" aria-label="Delete task">${ic('x')}</button>` : ''}</div>`;
+}
+
+function renderDocEditor(p){
+  const d = S.docs.find(x => x.id === state.doc);
+  if (!d){ state.doc = null; return renderWorkspace(); }
+  $('#tbSub').textContent = 'Documents · ' + (d.title || 'Untitled');
+  $('#view').innerHTML = `<div class="fadein"><div class="editor-head">
+      <button class="btn" data-act="closeDoc">${ic('back')}Documents</button><span class="spacer"></span>
+      <span class="stamp" id="docSaved">Saved</span>
+      <button class="btn danger" data-act="delDoc" data-id="${d.id}">${ic('trash')}Delete</button></div>
+    <input class="editor-title" id="docTitle" value="${esc(d.title)}" placeholder="Untitled" aria-label="Document title">
+    <textarea class="editor-body" id="docBody" placeholder="Start writing…" aria-label="Document text">${esc(d.body || '')}</textarea></div>`;
+  let t;
+  const onEdit = () => {
+    d.title = $('#docTitle').value; d.body = $('#docBody').value; d.updated = now();
+    $('#docSaved').textContent = 'Editing…';
+    clearTimeout(t); t = setTimeout(() => { save('docs', d.id); touchProject(); $('#docSaved').textContent = 'Saved'; renderSidebar(); }, 700);
+  };
+  $('#docTitle').addEventListener('input', onEdit);
+  $('#docBody').addEventListener('input', onEdit);
+}
+
+function renderInspector(){
+  const el = $('#inspector'), p = proj();
+  const avail = state.space === 'workspace' && !!p;
+  $('#ctxBtn').hidden = !avail;
+  const show = avail && state.inspector;
+  $('#ctxBtn').setAttribute('aria-pressed', show);
+  el.hidden = !show;
+  if (!show) return;
+  if (el.dataset.pid === p.id && el.contains(document.activeElement)) return;
+  el.dataset.pid = p.id;
+  el.innerHTML = `<div class="ins-h"><b>Project context</b><button class="icon-btn" data-act="ctx" aria-label="Close project context">${ic('x')}</button></div>
+    <form class="ins-body" data-form="context">
+      <label class="field"><span>Name</span><input class="input" id="cName" value="${esc(p.name)}" required></label>
+      <label class="field"><span>What this project is</span><textarea class="input" id="cDesc" placeholder="One or two sentences">${esc(p.desc||'')}</textarea></label>
+      <label class="field"><span>Goal</span><textarea class="input" id="cGoal" placeholder="What does done look like?">${esc(p.goal||'')}</textarea></label>
+      <label class="field"><span>Audience</span><textarea class="input" id="cAud" placeholder="Who is this for?">${esc(p.audience||'')}</textarea></label>
+      <label class="field"><span>Rules for Akira</span><textarea class="input" id="cRules" placeholder="e.g. Cite page numbers. Keep a formal tone.">${esc(p.rules||'')}</textarea></label>
+      <div class="field"><span>Color</span><div class="swatches" role="radiogroup" aria-label="Color">${COLORS.map(c => `<button type="button" class="sw" role="radio" style="background:${c}" aria-checked="${c===p.color}" data-act="color" data-v="${c}" aria-label="Color ${c}"></button>`).join('')}</div></div>
+      <button class="btn primary" type="submit">Save context</button>
+      <div class="wall">${ic('lock')}<span>This context stays inside ${esc(p.name)}. Home can’t see it, and it never goes into your personal memory.</span></div>
+      <div class="hr"></div>
+      <button class="btn danger" type="button" data-act="delProject">${ic('trash')}Delete project</button>
+    </form>`;
+}
+
+function renderComposer(){
+  const ws = state.space === 'workspace', p = proj();
+  const hide = state.view === 'settings' || (ws && (!p || (state.tab === 'docs' && state.doc) || state.tab === 'relations'));
+  $('#composerWrap').hidden = hide;
+  const sc = $('#scope');
+  sc.hidden = !ws || !p;
+  if (ws && p){ const n = pSources(p.id).length; sc.innerHTML = `<span class="pill">${ic('stack')}${esc(p.name)}</span><small>${n ? `Uses ${n} source${n>1?'s':''} and ${pDocs(p.id).length} document${pDocs(p.id).length===1?'':'s'}` : 'No sources yet: add some in Sources'}</small>`; }
+  $('#input').placeholder = ws && p ? `Ask about ${p.name}` : KIND[curKind()].place;
+  const md = prefs().model;
+  $('#modelLabel').textContent = md === 'auto' ? 'Auto' : md;
+  $('#fhp').hidden = !prefs().fhp || $('#fhp').hidden;
+  const banner = $('#banner');
+  banner.hidden = !(mode !== 'loading' && !sample);
+  banner.textContent = 'Cloud intelligence isn’t connected, so only on-device answers work. Add your Akira server in Settings → Intelligence.';
+  const send = $('#send');
+  if (state.busy === 'chat'){ send.disabled = false; send.innerHTML = '<span class="sq"></span>'; send.setAttribute('aria-label','Stop'); }
+  else { send.innerHTML = ic('up'); send.setAttribute('aria-label','Send'); send.disabled = !$('#input').value.trim(); }
+}
+
+/* First-Hand Processing: understand the request while it's being written */
+let fhpTimer, fhpLast = '';
+function fhp(){
+  clearTimeout(fhpTimer);
+  fhpTimer = setTimeout(() => {
+    const el = $('#fhp'), t = input.value.trim();
+    if (t.length < 3 || state.busy === 'chat' || !prefs().fhp){ el.hidden = true; el.innerHTML = ''; fhpLast = ''; return; }
+    const r = plan(t, state.space);
+    const w = WHERE[r.where];
+    const icons = { person:'person', topic:'tag', time:'clock', app:'device' };
+    const html = `<span class="fhp-label">Understanding</span><span class="sig lead"><i style="background:${routeColor(r)}"></i><b>${esc(routeLabel(r))}</b>· ${ic(w.icon)}${w.label}</span>`
+      + r.sig.map(s => `<span class="sig">${ic(icons[s.k])}<b>${esc(s.label)}</b></span>`).join('')
+      + (r.refs.length ? `<span class="sig">${ic('link')}<b>${r.refs.length} related</b>ready</span>` : '');
+    el.hidden = false;
+    if (html !== fhpLast){ el.innerHTML = html; fhpLast = html; }
+  }, 120);
+}
+
+/* ============ sheets & toasts ============ */
+let toastTimer;
+function toast(text, undo){
+  const l = $('#layer');
+  l.querySelector('.toast')?.remove();
+  const t = document.createElement('div');
+  t.className = 'toast glass'; t.setAttribute('role','status');
+  t.innerHTML = `<span>${esc(text)}</span>${undo ? '<button class="btn">Undo</button>' : ''}`;
+  if (undo) t.querySelector('button').onclick = () => { undo(); t.remove(); };
+  l.appendChild(t);
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.remove(), 5000);
+}
+function sheet(html, wire, cls = ''){
+  const l = $('#layer');
+  l.querySelector('.scrim')?.remove();
+  const s = document.createElement('div');
+  s.className = 'scrim';
+  s.innerHTML = `<div class="sheet ${cls}" role="dialog" aria-modal="true">${html}</div>`;
+  s.addEventListener('click', e => { if (e.target === s || e.target.closest('[data-close]')) closeSheet(); });
+  l.appendChild(s);
+  wire && wire(s);
+  (s.querySelector('[autofocus]') || s.querySelector('input,textarea,button'))?.focus();
+}
+function closeSheet(){ $('#layer .scrim')?.remove(); }
+function confirmSheet(title, body, label, onYes){
+  sheet(`<h2>${esc(title)}</h2><p>${esc(body)}</p><div class="sheet-foot"><button class="btn" data-close>Cancel</button><button class="btn danger" id="yes">${esc(label)}</button></div>`,
+    s => s.querySelector('#yes').onclick = () => { closeSheet(); onYes(); });
+}
+
+function addMemory(text, source){ const m = { id: uid(), text, source, at: now() }; S.profile.memory.unshift(m); save(null); return m; }
+
+function intelHTML(){
+  const all = [...S.chats, ...S.pchats].flatMap(c => c.msgs).filter(m => m.route);
+  const counts = {}; let local = 0, both = 0, cloud = 0;
+  all.forEach(m => { const k = m.route.local && m.route.local.kind !== 'soon' ? 'lac' : m.route.family; counts[k] = (counts[k] || 0) + 1; if (m.route.where === 'local') local++; else if (m.route.where === 'both') both++; else cloud++; });
+  const order = [['core','Core','var(--c-core)'],['una','Una','var(--c-una)'],['arc','Arc','var(--c-arc)'],['lac','On device','var(--label-3)'],['live','Live','var(--c-live)'],['cast','Cast','var(--c-cast)']];
+  const total = all.length;
+  const fams = ['arc','una','live','cast'].map(k => { const f = FAMILIES[k]; return `<div class="fam"><span class="fam-dot" style="background:${f.color}">${ic(f.icon)}</span><div class="fam-body"><b>${f.name}</b><p>${f.role}</p>${f.tiers.map(t => `<span class="mini">${t}</span>`).join('')}</div><span class="status ${f.soon ? 'soon' : 'ok'}">${f.soon ? 'With the Akira app' : k === 'arc' ? 'Vector images' : 'Available'}</span></div>`; }).join('');
+  const lac = [['Your chats and projects', true],['Search and Relations', true],['Calculator', true],['Date and time', true],['Messages', false],['Contacts', false],['Calendar', false],['Photos', false],['Settings', false],['Works offline', false]];
+  return `<div class="group-title">Core · general intelligence</div><div class="tiers">${FAMILIES.core.tiers.map(t => `<div class="tier"><b>${t}</b><span>${TIER_NOTES[t]}</span></div>`).join('')}</div>
+    <div class="group-title">Specialists</div><div class="group" style="padding:4px 16px">${fams}</div>
+    <div class="group-title">Where work happens</div>
+    <div class="centers">
+      <div class="center"><b>${ic('device')}Local Access Center</b><span>Handles what the device can do itself.</span><ul>${lac.map(([n, ok]) => `<li><span>${n}</span><span class="status ${ok ? 'ok' : 'soon'}">${ok ? 'Ready' : 'App only'}</span></li>`).join('')}</ul></div>
+      <div class="center"><b>${ic('cloud')}Cloud Access Center</b><span>For work that needs more compute, context or knowledge.</span><ul><li><span>Reasoning and writing</span><span class="status ok">Ready</span></li><li><span>Research briefs</span><span class="status ok">Ready</span></li><li><span>Code (Una)</span><span class="status ok">Ready</span></li><li><span>Images (Arc)</span><span class="status ok">Ready</span></li><li><span>Large project context</span><span class="status ok">Ready</span></li></ul></div>
+    </div>
+    <div class="protocol" style="margin-top:10px"><b>Alternate Protocol</b> decides, for every request: on device, in the cloud, or both. Arithmetic, search and device apps stay local. When something on your device is relevant, it’s found locally and sent along with the request.</div>
+    <div class="group-title">Your recent routing</div>
+    ${total ? `<div class="usage">${order.filter(o => counts[o[0]]).map(o => `<i style="width:${counts[o[0]] / total * 100}%;background:${o[2]}"></i>`).join('')}</div>
+    <div class="legend" style="margin-top:8px">${order.filter(o => counts[o[0]]).map(o => `<span><i style="background:${o[2]}"></i>${o[1]} ${counts[o[0]]}</span>`).join('')}<span>· ${local} on device, ${both} device + cloud, ${cloud} cloud</span></div>` : `<p class="muted">Nothing yet. Each answer shows which intelligence handled it; tap that label to see why.</p>`}
+    <p class="muted" style="margin-top:12px">In this preview, cloud intelligence runs on Claude, matched to each tier’s effort level. The Akira models will take its place.</p>`;
+}
+
+/* ============ settings ============ */
+const SET_TABS = [['general','General','sun'],['intelligence','Intelligence','cpu'],['memory','Memory','brain'],['relations','Relations','link'],['data','Privacy & data','shield'],['about','About','info']];
+const toggle = (k, label, desc) => `<div class="set-row"><div class="lbl"><b>${label}</b><span>${desc}</span></div><button class="switch" role="switch" aria-checked="${!!prefs()[k]}" data-act="togglePref" data-k="${k}" aria-label="${label}"></button></div>`;
+const segx = (k, opts, label) => `<div class="segx" role="group" aria-label="${label}">${opts.map(([v, l]) => `<button data-act="setPref" data-k="${k}" data-v="${v}" aria-pressed="${prefs()[k] === v}">${l}</button>`).join('')}</div>`;
+function renderSettings(){
+  $('#tbTitle').textContent = 'Settings'; $('#tbSub').textContent = SET_TABS.find(t => t[0] === state.setTab)[1];
+  $('#delBtn').hidden = true;
+  const P = prefs(), t = state.setTab;
+  let b = '';
+  if (t === 'general'){
+    b = `<h1>General</h1><p>How Akira looks and behaves.</p>
+      <div class="group-title">Appearance</div><div class="group"><div class="set-row"><div class="lbl"><b>Theme</b><span>System follows your device.</span></div>${segx('theme', [['system','System'],['light','Light'],['dark','Dark']], 'Theme')}</div></div>
+      <div class="group-title">Messages</div><div class="group">
+        ${toggle('enterSends', 'Return sends', 'When off, Return adds a new line and ⌘/Ctrl + Return sends.')}
+        ${toggle('fhp', 'Show understanding while typing', 'First-Hand Processing: see what Akira picks up (people, apps, times, related items) before you send.')}
+        ${toggle('routeLabels', 'Show which intelligence answered', 'A small label on each reply, like “Una General · Cloud”.')}
+      </div>
+      <div class="group-title">Dictation</div><div class="group"><div class="set-row"><div class="lbl"><b>Dictation language</b><span>Used by the microphone button in the message box.</span></div>
+        <select class="input" id="dictLang" data-pref="dictLang" aria-label="Dictation language">${[['en-US','English (US)'],['en-GB','English (UK)'],['es-ES','Español'],['fr-FR','Français'],['de-DE','Deutsch'],['it-IT','Italiano'],['pt-BR','Português (Brasil)'],['ja-JP','日本語'],['ko-KR','한국어'],['zh-CN','中文 (简体)'],['ar-SA','العربية'],['hi-IN','हिन्दी']].map(([v, l]) => `<option value="${v}" ${P.dictLang === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div></div>`;
+  } else if (t === 'intelligence'){
+    b = `<h1>Intelligence</h1><p>Akira picks the right intelligence for each request. You can also set a default model level here or from the menu in the message box.</p>
+      <div class="group-title">Model</div><div class="group">
+        <div class="set-row"><div class="lbl"><b>Default model</b><span>${P.model === 'auto' ? 'Auto: Akira picks Standard, Pro or Ultra for each request.' : `Every request uses ${P.model} (Arc and Una use ${({Standard:'Lite',Pro:'General',Ultra:'Max'})[P.model]}).`}</span></div>${segx('model', [['auto','Auto'],['Standard','Standard'],['Pro','Pro'],['Ultra','Ultra']], 'Default model')}</div>
+        ${toggle('shareRelated', 'Send related items with requests', 'The Local Access Center finds related chats and memories on your device and includes them so answers have context.')}
+      </div>
+      <div class="group-title">Akira server</div><div class="group">
+        <div class="set-row"><div class="lbl"><b>Server address</b><span>${backend === 'claude' ? 'On claude.ai, cloud work runs on Claude. On your own site, it goes to this server.' : backend === 'akira' ? 'Connected. Cloud work goes to this Akira server.' : 'Add your Akira server to answer beyond this device.'}</span></div><span class="status ${backend ? 'ok' : 'soon'}">${backend === 'akira' ? 'Connected' : backend === 'claude' ? 'Using Claude' : 'Not connected'}</span></div>
+        <div class="set-row" style="gap:8px;flex-wrap:wrap"><input class="input" id="srvUrl" type="url" placeholder="https://akira.yoursite.com" value="${esc(serverURL())}" style="flex:1;min-width:200px" aria-label="Akira server address"><button class="btn primary" data-act="saveServer">Connect</button></div>
+        <p class="muted" id="srvMsg" style="padding:0 2px"></p>
+      </div>${intelHTML()}`;
+  } else if (t === 'memory'){
+    const mem = S.profile.memory;
+    b = `<h1>Memory</h1><p>Akira uses these at Home. Forget anything at any time. Workspace projects keep their own context and never read this list.</p>
+      <div class="group"><div class="set-row"><div class="lbl"><b>Use memory</b><span>When off, Akira starts every chat fresh and won’t save new memories.</span></div><button class="switch" role="switch" aria-checked="${S.profile.memOn}" data-act="memToggle" aria-label="Use memory"></button></div></div>
+      <div class="group-title">Saved memories · ${mem.length}</div>
+      <form class="addrow" data-form="memAdd" style="margin:0 0 8px"><input class="input" id="memText" placeholder="Add something for Akira to remember" aria-label="New memory"><button class="btn primary">Add</button></form>
+      ${mem.length ? `<div class="group">${mem.map(m => `<div class="set-row"><div class="lbl"><b style="font-weight:450">${esc(m.text)}</b><span>${esc(m.source || '')} · ${when(m.at)}</span></div><button class="btn" data-act="forget" data-id="${m.id}">Forget</button></div>`).join('')}</div>
+        <div class="btns" style="margin-top:10px"><button class="btn danger" data-act="forgetAll">Forget everything</button></div>` : `<p class="muted">Nothing saved yet. Tell Akira a preference in a chat, or add one above.</p>`}`;
+  } else if (t === 'relations'){
+    b = `<h1>Relations</h1><p>Akira links the people, places and things that come up across your Home chats and memory. Pick one to see everything it touches. Each Workspace project has its own Relations tab.</p>${relationsHTML('akira')}`;
+  } else if (t === 'data'){
+    const n = { Chats:S.chats.length, Projects:S.projects.length, Documents:S.docs.length, Sources:S.sources.length, Memories:S.profile.memory.length };
+    b = `<h1>Privacy &amp; data</h1><p>${mode === 'account' ? 'Your data is saved privately to your account. Only you can see it, including in shared copies of this page.' : 'Your data is saved in this browser only. Clearing site data removes it.'}</p>
+      <div class="group-title">What’s stored</div><div class="group"><div class="count-grid">${Object.entries(n).map(([k, v]) => `<div class="stat"><b>${v}</b><span>${k}</span></div>`).join('')}</div></div>
+      <div class="group-title">Your data</div><div class="group">
+        ${downloads ? `<div class="set-row"><div class="lbl"><b>Export everything</b><span>A JSON file with your chats, projects, documents, sources and memory.</span></div><button class="btn" data-act="exportData">Export</button></div>` : ''}
+        <div class="set-row"><div class="lbl"><b>Delete Home chats</b><span>Removes every Home chat. Projects and memory stay.</span></div><button class="btn danger" data-act="deleteChats" ${S.chats.length ? '' : 'disabled'}>Delete chats</button></div>
+        <div class="set-row"><div class="lbl"><b>Delete everything</b><span>Chats, projects, documents, sources, memory and settings.</span></div><button class="btn danger" data-act="deleteAll">Delete everything</button></div>
+      </div>`;
+  } else {
+    b = `<h1>About Akira</h1><p>Akira is your general intelligent computing layer: everyday help at Home, focused work in Workspace, and one intelligence that picks the right tools for the job.</p>
+      <div class="group">
+        <div class="set-row"><div class="lbl"><b>Version</b><span>Web preview</span></div></div>
+        <div class="set-row"><div class="lbl"><b>Cloud intelligence</b><span>${backend === 'akira' ? 'Akira server: ' + esc(serverURL()) : backend === 'claude' ? 'Runs on Claude on claude.ai. On your own site it uses your Akira server.' : 'Not connected. Add your Akira server in Settings → Intelligence.'}</span></div><span class="status ${sample ? 'ok' : 'soon'}">${sample ? 'Connected' : 'Not connected'}</span></div>
+        <div class="set-row"><div class="lbl"><b>Storage</b><span>${mode === 'account' ? 'Your account' : 'This browser'}</span></div></div>
+        <div class="set-row"><div class="lbl"><b>Live and Cast</b><span>Real-time voice and vision arrive with the Akira app.</span></div><button class="btn" data-act="live">Preview</button></div>
+      </div>`;
+  }
+  $('#view').innerHTML = `<div class="settings fadein"><nav class="set-nav" aria-label="Settings sections">${SET_TABS.map(([k, l, i]) => `<button data-act="setTab" data-v="${k}" aria-current="${k === t}">${ic(i)}${l}</button>`).join('')}</nav><div class="set-body">${b}</div></div>`;
+}
+function openSettings(tab){ state.view = 'settings'; if (tab) state.setTab = tab; closeDrawer(); render(); $('#scroll').scrollTop = 0; }
+
+function openLive(){
+  sheet(`<div class="orb" aria-hidden="true"></div>
+    <h2 style="text-align:center">Akira, in real time</h2>
+    <p class="center-note">Speak naturally, interrupt, change your mind, or show Akira what you’re looking at. It listens and answers as you go.</p>
+    <div class="modes">
+      <div class="mode"><b><span class="fam-dot" style="background:var(--c-live);width:24px;height:24px;border-radius:7px">${ic('wave')}</span>Live</b><p>Real-time voice. A continuous conversation instead of type, wait, read.</p></div>
+      <div class="mode"><b><span class="fam-dot" style="background:var(--c-cast);width:24px;height:24px;border-radius:7px">${ic('camera')}</span>Cast</b><p>Real-time voice and vision. Point the camera and ask about what’s around you.</p></div>
+    </div>
+    <p class="muted" style="text-align:center">Live and Cast arrive with the Akira app. This web preview can’t use your microphone or camera.</p>
+    <div class="sheet-foot" style="justify-content:center"><button class="btn primary" data-close>Got it</button></div>`);
+}
+
+function openWhy(route){
+  const w = WHERE[route.where];
+  const cloudNote = route.local && route.local.kind !== 'soon' ? 'Answered on this device. Nothing was sent to the cloud.' : FAMILIES[route.family].soon ? `${FAMILIES[route.family].name} isn’t available in this preview yet.` : `In this preview, ${routeLabel(route)} runs on Claude at “${BACKEND[route.tier]}” effort until the Akira models are connected.`;
+  sheet(`<h2>${esc(routeLabel(route))} · ${w.label}</h2><p>Akira chose this automatically.</p>
+    <ul class="why-list">${route.why.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+    <p class="muted">${esc(cloudNote)}</p>
+    <div class="sheet-foot"><button class="btn" data-act-intel>How Akira decides</button><button class="btn primary" data-close>Done</button></div>`,
+    s => s.querySelector('[data-act-intel]').onclick = () => { closeSheet(); openSettings('intelligence'); });
+}
+
+function newProjectSheet(){
+  let color = COLORS[S.projects.length % COLORS.length];
+  sheet(`<h2>New project</h2><p>A project keeps its own sources, documents, tasks and conversations.</p>
+    <form id="npForm" style="display:flex;flex-direction:column;gap:14px">
+      <label class="field"><span>Name</span><input class="input" id="npName" required autofocus placeholder="e.g. Kitchen renovation"></label>
+      <label class="field"><span>What it’s about (optional)</span><textarea class="input" id="npDesc" placeholder="One or two sentences"></textarea></label>
+      <label class="field"><span>Goal (optional)</span><input class="input" id="npGoal" placeholder="What does done look like?"></label>
+      <div class="field"><span>Color</span><div class="swatches">${COLORS.map(c => `<button type="button" class="sw" style="background:${c}" aria-checked="${c===color}" data-c="${c}" aria-label="Color ${c}"></button>`).join('')}</div></div>
+      <div class="sheet-foot"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary">Create project</button></div>
+    </form>`, s => {
+      s.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { color = b.dataset.c; s.querySelectorAll('[data-c]').forEach(x => x.setAttribute('aria-checked', x === b)); });
+      s.querySelector('#npForm').onsubmit = e => {
+        e.preventDefault();
+        const p = { id: uid(), name: s.querySelector('#npName').value.trim(), desc: s.querySelector('#npDesc').value.trim(), goal: s.querySelector('#npGoal').value.trim(), audience:'', rules:'', color, tasks: [], created: now(), updated: now() };
+        if (!p.name) return;
+        S.projects.push(p); save('projects', p.id);
+        closeSheet(); state.project = p.id; state.tab = 'sources'; state.pchat = null; state.doc = null; closeDrawer(); render();
+        toast('Project created. Add some sources to get started.');
+      };
+    });
+}
+
+function pasteSourceSheet(){
+  sheet(`<h2>Paste text</h2><p>Add notes, an article or a transcript as a source.</p>
+    <form id="psForm" style="display:flex;flex-direction:column;gap:14px">
+      <label class="field"><span>Name</span><input class="input" id="psName" required placeholder="e.g. Interview notes"></label>
+      <label class="field"><span>Text</span><textarea class="input" id="psText" required style="min-height:200px"></textarea></label>
+      <div class="sheet-foot"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary">Add source</button></div>
+    </form>`, s => {
+      s.querySelector('#psForm').onsubmit = e => { e.preventDefault(); addSource(s.querySelector('#psName').value.trim(), s.querySelector('#psText').value); closeSheet(); };
+    });
+}
+
+/* ============ data actions ============ */
+const MAX_SOURCE = 200000;
+function addSource(name, text){
+  const p = proj(); if (!p || !text.trim()) return;
+  const trimmed = text.length > MAX_SOURCE;
+  const s = { id: uid(), projectId: p.id, name: name || 'Untitled source', text: trimmed ? text.slice(0, MAX_SOURCE) : text, words: words(text.slice(0, MAX_SOURCE)), trimmed, created: now() };
+  S.sources.push(s); save('sources', s.id); touchProject();
+  render();
+  toast(trimmed ? `Added “${s.name}” (trimmed to the first 200,000 characters)` : `Added “${s.name}”`);
+}
+async function addFiles(files){
+  for (const f of files){
+    if (f.size > 5e6){ toast(`“${f.name}” is over 5 MB. Split it into smaller files.`); continue; }
+    let text = await f.text();
+    if (/\.html?$/i.test(f.name)){ const d = new DOMParser().parseFromString(text, 'text/html'); text = d.body ? d.body.innerText || d.body.textContent : text; }
+    if (/\u0000/.test(text.slice(0, 2000))){ toast(`“${f.name}” isn’t a text file. Copy its text and use Paste text instead.`); continue; }
+    addSource(f.name, text);
+  }
+}
+function touchProject(){ const p = proj(); if (p){ p.updated = now(); save('projects', p.id); } }
+function addTask(title, due, byAkira){
+  const p = proj(); const t = { id: uid(), title, due: due || '', done: false, byAkira: !!byAkira, created: now() };
+  p.tasks = p.tasks || []; p.tasks.push(t); p.updated = now(); save('projects', p.id); return t;
+}
+function addDoc(title, body, byAkira){
+  const p = proj(); const d = { id: uid(), projectId: p.id, title, body: body || '', byAkira: !!byAkira, created: now(), updated: now() };
+  S.docs.push(d); save('docs', d.id); touchProject(); return d;
+}
+
+/* ============ answering ============ */
+let ctl = null;
+const ERR = {
+  not_granted: 'Akira needs permission to use cloud intelligence. Allow it from this page’s Permissions menu, then try again.',
+  sampling_disabled: 'Cloud intelligence isn’t available for this account.',
+  rate_limited: 'You’ve reached a usage limit. Wait a bit, then try again.',
+  prompt_too_large: 'That’s too much text at once. Remove some sources or start a new conversation.',
+  session_expired: 'Your session expired. Sign in to claude.ai again, then retry.',
+};
+const errText = e => ERR[e && e.code] || 'Akira couldn’t reach the cloud. Try again.';
+
+function akiraRules(){
+  const mem = S.profile.memOn ? S.profile.memory.map(m => '- ' + m.text).join('\n') : '';
+  return `You are Akira, a personal assistant for everyday help: questions, reasoning, information, planning, writing and explanations. Be warm, clear and direct, and keep answers as short as the question allows. Use light Markdown (short paragraphs, bullet lists, **bold**), no tables. Never mention Claude or which model you run on; you are Akira.
+In this web preview you can't browse the web, read the user's messages, calendar, contacts, photos or files, or act in other apps. If asked, say so plainly and offer what you can do instead, such as a draft or a checklist.
+Today is ${new Date().toDateString()}.
+${S.profile.memOn ? `Things the user has asked you to remember:\n${mem || '(nothing yet)'}\nUse them only when relevant. When the user shares a lasting preference or fact about themselves that would help in future chats, call the remember tool with one short fact. Never remember health, financial or password details unless the user explicitly asks.` : 'Memory is off. Do not save or refer to remembered facts.'}`;
+}
+function projectRules(p){
+  const srcs = pSources(p.id), docs = pDocs(p.id);
+  let budget = 170000, srcText = '';
+  srcs.forEach((s, i) => { const chunk = s.text.slice(0, Math.max(0, budget)); budget -= chunk.length; if (chunk) srcText += `\n=== [S${i+1}] ${s.name} ===\n${chunk}${chunk.length < s.text.length ? '\n[...cut for length]' : ''}\n`; });
+  let docText = '', db = 30000;
+  docs.forEach(d => { const chunk = (d.body||'').slice(0, Math.max(0, Math.min(6000, db))); db -= chunk.length; docText += `\n--- Document: ${d.title || 'Untitled'} ---\n${chunk}\n`; });
+  const tasks = (p.tasks||[]).map(t => `- [${t.done?'x':' '}] ${t.title}${t.due ? ' (due ' + t.due + ')' : ''}`).join('\n');
+  return `You are Akira working inside the Workspace project "${p.name}". This is a focused work environment, separate from the user's personal Home chats; you know nothing about them here. Never mention Claude or which model you run on; you are Akira.
+Project description: ${p.desc || '(none)'}
+Goal: ${p.goal || '(not set)'}
+Audience: ${p.audience || '(not set)'}
+Rules from the user: ${p.rules || '(none)'}
+Today is ${new Date().toDateString()}.
+
+Answer from the project's sources and documents plus general knowledge. When you rely on a source, cite it inline as [S1], [S2] using the numbers below. If the sources don't cover something, say so. Flag conflicts between sources rather than resolving them silently. Use light Markdown, no tables.
+When the user asks for tasks or a to-do list, or clearly would benefit, use add_task. When they ask for a draft, outline or write-up to keep, use create_document with the full Markdown text. Briefly say what you added.
+
+Tasks:
+${tasks || '(none)'}
+
+Documents:${docText || ' (none)'}
+
+Sources:${srcText || ' (none yet)'}`;
+}
+function rulesFor(r, space){
+  let base = space === 'akira' ? akiraRules() : projectRules(proj());
+  if (r.family === 'una') base += `\n\nFor this request Akira is using Una, its coding intelligence (${r.tier}). Give correct, complete code in fenced blocks with a language tag. When fixing a bug, first say in one or two sentences why it failed. Keep explanations tight.`;
+  if (r.family === 'arc') base += `\n\nFor this request Akira is using Arc, its visual intelligence (${r.tier}). Arc makes a visual concept as one self-contained SVG: include a viewBox, omit width and height, no scripts, no external images or fonts, no foreignObject, under 7000 characters. Use gradients, layered shapes, light and considered composition${r.tier === 'Max' ? ', with rich detail' : r.tier === 'Lite' ? ', kept simple' : ''}. Reply with one short sentence describing the concept, then the SVG in a \`\`\`svg code block, then one short line suggesting a refinement. When the user asks to change an earlier image, redraw the whole SVG with the change.`;
+  if (r.research) base += `\n\nThis is a Research chat. For a new question, write a structured research brief in Markdown: "## Summary" (3–4 sentences), "## Key findings" (bullets), then one "##" section per sub-question, then "## Open questions" and "## What to verify". For follow-ups, answer in the same careful style but shorter unless asked. Your knowledge comes from training data and you can't browse the web here, so flag anything time-sensitive or uncertain.${r.steps && r.steps.length ? '\nSub-questions to cover, in order:\n' + r.steps.map((x, i) => `${i+1}. ${x}`).join('\n') : ''}`;
+  if (space === 'akira' && r.refs.length) base += '\n\nRelated items the Local Access Center found on this device. Use them if relevant, and say which one you used:\n' + r.refs.map(x => `- ${TYPE[x.type].name} “${x.title}”: ${snippet(x, 600)}`).join('\n');
+  return base;
+}
+
+function localReply(r, text, space){
+  const reply = { role:'assistant', route: routeOf(r), refs: [] };
+  const L = r.local, sig = k => (r.sig.find(s => s.k === k) || {}).label;
+  if (L.kind === 'calc') reply.content = `**${L.expr} = ${fmtNum(L.value)}**`;
+  else if (L.kind === 'clock'){ const d = new Date(); reply.content = `It’s **${d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}** on **${d.toLocaleDateString([], {weekday:'long', month:'long', day:'numeric', year:'numeric'})}**.`; }
+  else if (L.kind === 'search'){
+    const q = text.replace(/^(find|search( for)?|show( me)?|look up|list)\s+/i, '').replace(/^what did i (say|ask|write|talk about)\s*/i, '')
+      .replace(/\b(my|the|all|any|chats?|conversations?|notes?|memor(y|ies)|projects?|documents?|docs?|sources?|tasks?|about|for|on|related to|that|mention(s|ed|ing)?|where|i|with)\b/gi, ' ').replace(/[?.!]/g, '').replace(/\s+/g, ' ').trim();
+    const res = space === 'akira' ? searchChats(text).list.slice(0, 8).map(c => ({ type:'chat', id:c.id, title:c.title })) : q ? related(q, space, 8, true) : corpus(space, true).slice(0, 8);
+    reply.refs = res.map(x => ({ type:x.type, id:x.id, title:x.title, label:x.label }));
+    reply.content = res.length ? `Found ${res.length} item${res.length > 1 ? 's' : ''}${q ? ` for “${q}”` : ''} on this device.` : `Nothing on this device matches “${q}”.`;
+  } else if (L.kind === 'app'){
+    const who = sig('person'), topic = sig('topic'), time = sig('time');
+    reply.content = `I’d look in **${L.app}**${who ? ` for **${who}**` : ''}${topic ? ` about **${topic}**` : ''}${time ? `, around **${time}**` : ''}. In the Akira app, the Local Access Center answers this on your device without using the cloud.\n\n${L.app} isn’t connected in this web preview, so there’s nothing for me to read here yet.${/Messages|Mail/.test(L.app) ? ' I can help you draft a reply if you tell me what it said.' : ''}`;
+  } else if (L.kind === 'soon'){
+    const f = FAMILIES[r.family];
+    reply.content = `That’s a job for **${f.name}**: ${f.role.toLowerCase()} ${f.name} arrives with the Akira app. This web preview can’t use your microphone or camera.`;
+    reply.liveCta = true;
+  }
+  return reply;
+}
+const routeOf = r => ({ family:r.family, tier:r.tier, where:r.where, why:r.why, local:r.local ? { kind:r.local.kind } : null });
+
+async function ask(convo, r, space, tools, ctxKey){
+  const history = convo.msgs.filter(m => m.content && !m.error).slice(-30).map(m => ({ role: m.role, content: m.content }));
+  while (history.length && history[0].role !== 'user') history.shift();
+  const reply = { role:'assistant', content:'', actions:[], route: routeOf(r), refs: space === 'akira' ? r.refs.map(x => ({ type:x.type, id:x.id, title:x.title, label:x.label })) : [] };
+  convo.msgs.push(reply);
+  const idx = convo.msgs.length - 1;
+  state.busy = 'chat'; render(); scrollEnd();
+  ctl = new AbortController();
+  let raf = 0;
+  const paint = () => {
+    if (raf) return;
+    raf = requestAnimationFrame(() => {
+      raf = 0;
+      const el = document.getElementById(`${ctxKey}-m${idx}`);
+      if (el) el.outerHTML = msgHTML(reply, idx, ctxKey);
+      nearBottom() && scrollEnd();
+    });
+  };
+  const opts = { signal: ctl.signal, modelTier: BACKEND[r.tier] || 'default', onText: ({ text }) => { reply.content = text; paint(); } };
+  if (backend === 'akira') opts.akira = { family: r.family, tier: r.tier };
+  const tl = tools(reply);
+  if (tl.length) opts.tools = tl; else opts.cache = false;
+  try {
+    if (r.research && convo.msgs.filter(m => m.role === 'user').length === 1){
+      reply.plan = { steps:[], phase:'planning' }; paint();
+      try {
+        const steps = await sample.json(`You are planning research for Akira. Request: "${history[history.length-1].content}". Reply with only a JSON array of 4 to 6 short, specific sub-questions (strings) that together answer it well.`, { modelTier:'quick', signal: ctl.signal });
+        reply.plan.steps = (Array.isArray(steps) ? steps : []).slice(0, 6).map(x => String(x).slice(0, 180));
+      } catch (e) { if (e && e.code === 'cancelled') throw e; }
+      if (!reply.plan.steps.length) delete reply.plan; else reply.plan.phase = 'writing';
+      r.steps = reply.plan ? reply.plan.steps : [];
+      paint();
+    }
+    const turns = [{ role:'user', content: rulesFor(r, space) + '\n\nReply "Ready." to confirm.' }, { role:'assistant', content:'Ready.' }, ...history];
+    let res;
+    try { res = await sample(turns, opts); }
+    catch (e) {
+      if (e && e.code === 'tools_unavailable' && opts.tools){ delete opts.tools; opts.cache = false; res = await sample(turns, opts); }
+      else throw e;
+    }
+    reply.content = res.text;
+    if (reply.plan) reply.plan.phase = 'done';
+    if (res.truncated) reply.content += '\n\n*(Cut short. Ask me to continue.)*';
+  } catch (e) {
+    if (e && e.text) reply.content = e.text;
+    if (reply.plan && reply.plan.phase === 'planning') delete reply.plan;
+    if (!(e && e.code === 'cancelled')) reply.error = errText(e);
+    else if (!reply.content) reply.content = '*Stopped.*';
+  }
+  state.busy = null; ctl = null;
+  convo.updated = now();
+  render(); nearBottom(240) && scrollEnd();
+}
+const scrollEnd = () => { const s = $('#scroll'); s.scrollTop = s.scrollHeight; };
+const nearBottom = (px = 160) => { const s = $('#scroll'); return s.scrollHeight - s.scrollTop - s.clientHeight < px; };
+
+async function sendMessage(text){
+  const space = state.space;
+  const r = plan(text, space);
+  let c, coll, ctxKey;
+  stopDictation();
+  if (space === 'akira'){
+    c = S.chats.find(x => x.id === state.chat);
+    if (!c){ c = { id: uid(), kind: state.newKind || 'chat', title: trunc(text.replace(/\s+/g, ' '), 40), msgs: [], created: now(), updated: now() }; S.chats.push(c); state.chat = c.id; }
+    coll = 'chats'; ctxKey = 'c';
+  } else {
+    const p = proj(); if (!p) return;
+    c = S.pchats.find(x => x.id === state.pchat && x.projectId === p.id);
+    if (!c){ c = { id: uid(), projectId: p.id, title: trunc(text.replace(/\s+/g, ' '), 40), msgs: [], created: now(), updated: now() }; S.pchats.push(c); state.pchat = c.id; }
+    state.tab = 'chat'; coll = 'pchats'; ctxKey = 'p';
+  }
+  c.msgs.push({ role:'user', content:text }); c.updated = now();
+  if (r.local){
+    c.msgs.push(localReply(r, text, space));
+  } else if (!sample){
+    c.msgs.push({ role:'assistant', content:'', route: routeOf(r), error:'This needs the Cloud Access Center, which isn’t connected. Add your Akira server in Settings → Intelligence.' });
+  } else if (space === 'akira'){
+    await ask(c, r, space, reply => S.profile.memOn && r.family === 'core' && !r.research ? [{
+      name: 'remember',
+      description: 'Save one short, lasting fact or preference about the user for future Home chats.',
+      inputSchema: { type:'object', properties:{ fact:{ type:'string', description:'The fact, under 120 characters, written about the user (e.g. "Prefers trains to flights").' } }, required:['fact'] },
+      execute: ({ fact }) => { const m = addMemory(String(fact).slice(0, 160), 'From “' + c.title + '”'); reply.actions.push({ kind:'memory', text:m.text, ref:m.id }); renderSidebar(); return 'Saved.'; }
+    }] : [], ctxKey);
+  } else {
+    await ask(c, r, space, reply => r.family === 'arc' ? [] : [
+      { name:'add_task', description:'Add a task to this project.', inputSchema:{ type:'object', properties:{ title:{type:'string'}, due:{type:'string', description:'Optional due date as YYYY-MM-DD'} }, required:['title'] },
+        execute: ({ title, due }) => { const t = addTask(String(title).slice(0, 200), /^\d{4}-\d{2}-\d{2}$/.test(due||'') ? due : '', true); reply.actions.push({ kind:'task', text:t.title, ref:t.id }); return 'Task added.'; } },
+      { name:'create_document', description:'Create a document in this project with a title and full Markdown body.', inputSchema:{ type:'object', properties:{ title:{type:'string'}, body:{type:'string'} }, required:['title','body'] },
+        execute: ({ title, body }) => { const d = addDoc(String(title).slice(0, 200), String(body), true); reply.actions.push({ kind:'doc', text:d.title, ref:d.id }); return 'Document created.'; } }
+    ], ctxKey);
+    touchProject();
+  }
+  c.updated = now();
+  save(coll, c.id);
+  render(); scrollEnd();
+}
+
+async function statusUpdate(){
+  const p = proj(); if (!p || !sample) return;
+  state.busy = 'status'; render();
+  try {
+    const { text } = await sample(projectRules(p) + '\n\nWrite a short status update for this project: where things stand (2–3 sentences), then "Next" with up to 3 bullets, then any risks or gaps in the sources. Under 140 words. Do not call any tools.', { cache:false, modelTier:'default' });
+    p.status = { text, at: now() }; save('projects', p.id);
+  } catch (e) { if (e.code !== 'cancelled') toast(errText(e)); }
+  state.busy = null; render();
+}
+
+/* ============ events ============ */
+function closeDrawer(){ $('#app').classList.remove('drawer'); }
+function convoFor(ctx){ return ctx === 'c' ? S.chats.find(x => x.id === state.chat) : S.pchats.find(x => x.id === state.pchat); }
+const ACT = {
+  space: el => {
+    if (state.space === el.dataset.v && state.view === 'main') return closeDrawer();
+    state.view = 'main'; state.searchAI = null;
+    state.space = el.dataset.v; $('#q').value = ''; closeDrawer(); render(); $('#scroll').scrollTop = 0; fhp();
+    const a = $('#app'); a.classList.remove('switching'); void a.offsetWidth; a.classList.add('switching');
+  },
+  drawer: () => $('#app').classList.toggle('drawer'),
+  memory: () => openSettings('memory'),
+  settings: () => openSettings(),
+  setTab: el => { state.setTab = el.dataset.v; render(); $('#scroll').scrollTop = 0; },
+  saveServer: async () => {
+    const url = $('#srvUrl').value.trim(), msg = $('#srvMsg');
+    if (!url){ prefs().server = ''; save(null); if (backend === 'akira'){ sample = null; backend = null; } render(); return; }
+    msg.textContent = 'Connecting…';
+    try {
+      const st = await connectServer(url);
+      prefs().server = url.replace(/\/+$/, ''); save(null);
+      if (backend !== 'claude'){ sample = akiraServer(prefs().server); backend = 'akira'; }
+      const trained = Object.keys(st.native_brains || {});
+      render();
+      $('#srvMsg').textContent = `Connected. ${st.cloud ? 'Cloud side on. ' : ''}Trained brains: ${trained.length ? trained.join(', ') : 'none yet'}.`;
+    } catch (e) {
+      msg.textContent = 'Couldn’t reach that server. Check the address, that the server is running, and that AKIRA_ORIGINS includes this site.';
+    }
+  },
+  setPref: el => setPref(el.dataset.k, el.dataset.v),
+  togglePref: el => setPref(el.dataset.k, !prefs()[el.dataset.k]),
+  memToggle: () => { S.profile.memOn = !S.profile.memOn; save(null); render(); },
+  forget: el => {
+    const mem = S.profile.memory, i = mem.findIndex(m => m.id === el.dataset.id), [gone] = mem.splice(i, 1);
+    save(null); render();
+    toast('Forgotten', () => { S.profile.memory.splice(i, 0, gone); save(null); render(); });
+  },
+  forgetAll: () => confirmSheet('Forget everything?', `Akira will forget all ${S.profile.memory.length} saved memories. This can’t be undone.`, 'Forget all', () => { S.profile.memory = []; save(null); render(); toast('Memory cleared'); }),
+  exportData: async () => {
+    try { await downloads.save({ filename:`akira-export-${new Date().toISOString().slice(0, 10)}.json`, data: new Blob([JSON.stringify({ exported: new Date().toISOString(), ...S }, null, 2)], { type:'application/json' }) }); }
+    catch (e) { if (e && e.code !== 'declined') toast('Couldn’t export your data here.'); }
+  },
+  deleteChats: () => confirmSheet('Delete all Home chats?', `${S.chats.length} chats will be deleted. Projects and memory stay. This can’t be undone.`, 'Delete chats', () => { [...S.chats].forEach(c => remove('chats', c.id)); state.chat = null; render(); toast('Home chats deleted'); }),
+  deleteAll: () => {
+    sheet(`<h2>Delete everything?</h2><p>All chats, projects, documents, sources, memory and settings will be deleted. This can’t be undone. Type DELETE to confirm.</p>
+      <input class="input" id="delConfirm" autocomplete="off" aria-label="Type DELETE to confirm">
+      <div class="sheet-foot"><button class="btn" data-close>Cancel</button><button class="btn danger" id="yes" disabled>Delete everything</button></div>`, s => {
+      const inp = s.querySelector('#delConfirm'), yes = s.querySelector('#yes');
+      inp.oninput = () => { yes.disabled = inp.value.trim() !== 'DELETE'; };
+      yes.onclick = () => {
+        COLLS.forEach(k => [...S[k]].forEach(x => remove(k, x.id)));
+        S.profile = { memory:[], memOn:true }; save(null);
+        Object.assign(state, { chat:null, project:null, pchat:null, doc:null, view:'main', space:'akira', newKind:'chat' });
+        closeSheet(); applyPrefs(); render(); toast('Everything was deleted');
+      };
+    });
+  },
+  live: openLive,
+  dictate: () => toggleDictation(),
+  modelMenu: () => toggleModelMenu(),
+  pickModel: el => { setPref('model', el.dataset.v); toggleModelMenu(false); toast(el.dataset.v === 'auto' ? 'Akira will pick the model for each request' : `Using ${el.dataset.v} for every request`); },
+  askSearch: () => askSearch(),
+  newKind: el => { state.space = 'akira'; state.view = 'main'; state.chat = null; state.newKind = el.dataset.v; closeDrawer(); render(); $('#input').focus(); },
+  copy: el => {
+    const code = el.parentElement.querySelector('code').textContent;
+    const ok = () => { el.textContent = 'Copied'; setTimeout(() => { el.textContent = 'Copy'; }, 1500); };
+    const fallback = () => { const range = document.createRange(); range.selectNodeContents(el.parentElement.querySelector('code')); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(range); toast('Selected. Press ⌘C or Ctrl+C to copy.'); };
+    try { navigator.clipboard.writeText(code).then(ok, fallback); } catch { fallback(); }
+  },
+  dlSvg: async el => {
+    const src = el.closest('figure').querySelector('img').getAttribute('src');
+    const svg = decodeURIComponent(src.slice(src.indexOf(',') + 1));
+    try { await downloads.save({ filename:'akira-image.svg', data: new Blob([svg], { type:'image/svg+xml' }) }); }
+    catch (e) { if (e && e.code !== 'declined') toast('Couldn’t download the image here.'); }
+  },
+  pickRel: el => { state.rel = el.dataset.v; render(); },
+  why: el => { const m = convoFor(el.dataset.ctx)?.msgs[+el.dataset.i]; if (m && m.route) openWhy(m.route); },
+  newItem: () => {
+    closeDrawer();
+    state.view = 'main';
+    if (state.space === 'akira'){ state.chat = null; state.newKind = 'chat'; render(); $('#input').focus(); }
+    else newProjectSheet();
+  },
+  openChat: el => { state.chat = el.dataset.id; state.view = 'main'; closeDrawer(); render(); scrollEnd(); },
+  suggest: el => { const i = $('#input'); i.value = el.dataset.v; syncInput(); i.focus(); i.setSelectionRange(i.value.length, i.value.length); },
+  delCurrent: () => {
+    if (state.space === 'akira'){
+      const c = S.chats.find(x => x.id === state.chat); if (!c) return;
+      confirmSheet('Delete this chat?', `“${c.title}” will be removed. This can’t be undone.`, 'Delete chat', () => { remove('chats', c.id); state.chat = null; render(); toast('Chat deleted'); });
+    } else {
+      const c = S.pchats.find(x => x.id === state.pchat); if (!c) return;
+      confirmSheet('Delete this conversation?', `“${c.title}” will be removed from the project. Documents and tasks it created stay.`, 'Delete', () => { remove('pchats', c.id); state.pchat = null; render(); toast('Conversation deleted'); });
+    }
+  },
+  openProject: el => { state.view = 'main'; if (state.project !== el.dataset.id){ state.project = el.dataset.id; state.tab = 'overview'; state.pchat = null; state.doc = null; state.rel = null; } closeDrawer(); render(); $('#scroll').scrollTop = 0; },
+  newProject: newProjectSheet,
+  tab: el => { state.tab = el.dataset.v; state.doc = null; if (el.dataset.v === 'chat' && !state.pchat) state.pchat = pChats(state.project)[0]?.id || null; render(); },
+  newConvo: () => { state.pchat = null; render(); $('#input').focus(); },
+  openConvo: el => { state.pchat = el.dataset.id; render(); scrollEnd(); },
+  openRef: el => {
+    const { type, id } = el.dataset;
+    if (type === 'chat'){ if (!S.chats.some(c => c.id === id)) return toast('That chat was deleted.'); state.space = 'akira'; state.view = 'main'; state.chat = id; render(); scrollEnd(); }
+    else if (type === 'memory') openSettings('memory');
+    else if (type === 'doc') ACT.openDoc(el);
+    else if (type === 'source'){ state.tab = 'sources'; state.doc = null; render(); }
+    else if (type === 'task'){ state.tab = 'tasks'; state.doc = null; render(); }
+    else if (type === 'pchat'){ state.tab = 'chat'; state.pchat = id; state.doc = null; render(); scrollEnd(); }
+  },
+  ctx: () => { state.inspector = !state.inspector; renderInspector(); },
+  color: el => { const p = proj(); p.color = el.dataset.v; p.updated = now(); save('projects', p.id); delete $('#inspector').dataset.pid; render(); },
+  delProject: () => {
+    const p = proj();
+    confirmSheet(`Delete ${p.name}?`, 'Its sources, documents, tasks and conversations will be deleted. This can’t be undone.', 'Delete project', () => {
+      S.sources.filter(s => s.projectId === p.id).forEach(s => remove('sources', s.id));
+      S.docs.filter(s => s.projectId === p.id).forEach(s => remove('docs', s.id));
+      S.pchats.filter(s => s.projectId === p.id).forEach(s => remove('pchats', s.id));
+      remove('projects', p.id); state.project = null; delete $('#inspector').dataset.pid; render(); toast('Project deleted');
+    });
+  },
+  toggleTask: el => { const p = proj(), t = p.tasks.find(x => x.id === el.dataset.id); t.done = !t.done; p.updated = now(); save('projects', p.id); render(); },
+  delTask: el => {
+    const p = proj(), i = p.tasks.findIndex(x => x.id === el.dataset.id), [t] = p.tasks.splice(i, 1);
+    save('projects', p.id); render();
+    toast('Task deleted', () => { p.tasks.splice(i, 0, t); save('projects', p.id); render(); });
+  },
+  newDoc: () => { const d = addDoc('', ''); state.doc = d.id; render(); $('#docTitle').focus(); },
+  openDoc: el => { const d = S.docs.find(x => x.id === el.dataset.id); if (!d){ toast('That document was removed.'); return; } state.view = 'main'; state.space = 'workspace'; state.project = d.projectId; state.tab = 'docs'; state.doc = d.id; render(); $('#scroll').scrollTop = 0; },
+  closeDoc: () => {
+    const d = S.docs.find(x => x.id === state.doc);
+    if (d && !d.title.trim() && !(d.body||'').trim()) remove('docs', d.id);
+    state.doc = null; render();
+  },
+  delDoc: el => {
+    const d = S.docs.find(x => x.id === el.dataset.id);
+    confirmSheet('Delete this document?', `“${d.title || 'Untitled'}” will be deleted. This can’t be undone.`, 'Delete', () => { remove('docs', d.id); state.doc = null; render(); toast('Document deleted'); });
+  },
+  upload: () => $('#fileInput').click(),
+  pasteSource: pasteSourceSheet,
+  delSource: el => {
+    const s = S.sources.find(x => x.id === el.dataset.id);
+    confirmSheet('Remove this source?', `Akira will stop using “${s.name}” in this project. Source numbers after it will shift.`, 'Remove', () => { remove('sources', s.id); touchProject(); render(); toast('Source removed'); });
+  },
+  status: statusUpdate,
+  undoAction: el => {
+    const list = convoFor(el.dataset.ctx);
+    const m = list.msgs[+el.dataset.i], a = m.actions[+el.dataset.j];
+    if (a.kind === 'memory'){ S.profile.memory = S.profile.memory.filter(x => x.id !== a.ref); save(null); }
+    if (a.kind === 'task'){ const p = proj(); p.tasks = p.tasks.filter(t => t.id !== a.ref); save('projects', p.id); }
+    if (a.kind === 'doc'){ remove('docs', a.ref); }
+    a.undone = true; save(el.dataset.ctx === 'c' ? 'chats' : 'pchats', list.id); render();
+  }
+};
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if (!el || el.closest('.scrim')) return;
+  const f = ACT[el.dataset.act];
+  if (f){ e.preventDefault(); f(el); }
+});
+document.addEventListener('input', e => {
+  if (e.target.id === 'relQ'){
+    state.relQ = e.target.value;
+    const pos = e.target.selectionStart;
+    render();
+    const n = $('#relQ'); if (n){ n.focus(); n.setSelectionRange(pos, pos); }
+  }
+});
+document.addEventListener('submit', e => {
+  const f = e.target.dataset.form;
+  if (f === 'addTask'){
+    e.preventDefault();
+    const title = $('#taskTitle').value.trim(); if (!title) return;
+    addTask(title, $('#taskDue').value); render(); $('#taskTitle').focus();
+  } else if (f === 'memAdd'){
+    e.preventDefault();
+    const v = $('#memText').value.trim(); if (!v) return;
+    addMemory(v, 'Added by you'); render(); $('#memText').focus();
+  } else if (f === 'context'){
+    e.preventDefault();
+    const p = proj();
+    p.name = $('#cName').value.trim() || p.name; p.desc = $('#cDesc').value.trim(); p.goal = $('#cGoal').value.trim(); p.audience = $('#cAud').value.trim(); p.rules = $('#cRules').value.trim(); p.updated = now();
+    save('projects', p.id); document.activeElement.blur(); delete $('#inspector').dataset.pid; render(); toast('Project context saved');
+  }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape'){ closeSheet(); closeDrawer(); toggleModelMenu(false); } });
+document.addEventListener('change', e => { if (e.target.dataset.pref) setPref(e.target.dataset.pref, e.target.value); });
+document.addEventListener('click', e => { if (!$('#modelMenu').hidden && !e.target.closest('#modelMenu, #modelBtn')) toggleModelMenu(false); }, true);
+$('#q').addEventListener('input', () => { state.searchAI = null; renderSidebar(); });
+$('#q').addEventListener('keydown', e => { if (e.key === 'Enter' && sample && $('#q').value.trim()) askSearch(); });
+
+/* Model menu */
+function toggleModelMenu(open){
+  const m = $('#modelMenu'), show = open ?? m.hidden;
+  if (!show){ m.hidden = true; $('#modelBtn').setAttribute('aria-expanded', 'false'); return; }
+  const cur = prefs().model;
+  m.innerHTML = [['auto','Auto','Akira picks the best level for each request'],['Standard','Standard','Fastest, for everyday questions'],['Pro','Pro','Reasoning, planning and writing'],['Ultra','Ultra','Most capable, for in-depth work. Slower.']]
+    .map(([v, l, d]) => `<button type="button" class="mm-opt" role="menuitemradio" aria-checked="${cur === v}" data-act="pickModel" data-v="${v}"><svg class="i tick"><use href="#i-check"/></svg><div><b>${l}</b><span>${d}</span></div></button>`).join('');
+  m.hidden = false; $('#modelBtn').setAttribute('aria-expanded', 'true');
+  m.querySelector('[aria-checked="true"]')?.focus();
+}
+
+/* Dictation: browser speech recognition, with device dictation as the fallback */
+let rec = null;
+function setMic(on){ const b = $('#micBtn'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); b.setAttribute('aria-label', on ? 'Stop dictation' : 'Dictate'); }
+function stopDictation(){ if (rec){ const r0 = rec; rec = null; try { r0.stop(); } catch {} } setMic(false); }
+function dictationHelp(reason){
+  sheet(`<h2>Dictate with your device</h2><p>${esc(reason)} Your device’s built-in dictation works in Akira’s message box. Put the cursor in the box, then:</p>
+    <ul class="why-list"><li><b>Mac:</b> press <kbd>Fn</kbd> twice, or the microphone key</li><li><b>Windows:</b> press <kbd>Windows</kbd> + <kbd>H</kbd></li><li><b>iPhone and iPad:</b> tap the microphone on the keyboard</li><li><b>Android:</b> tap the microphone on the keyboard</li></ul>
+    <div class="sheet-foot"><button class="btn primary" data-close id="dictOk">Start typing</button></div>`, s => s.querySelector('#dictOk').addEventListener('click', () => setTimeout(() => input.focus(), 0)));
+}
+function toggleDictation(){
+  if (rec){ stopDictation(); return; }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return dictationHelp('This browser doesn’t offer speech recognition to pages.');
+  const r0 = new SR();
+  r0.lang = prefs().dictLang; r0.interimResults = true; r0.continuous = true;
+  const base = input.value ? input.value.replace(/\s*$/, ' ') : '';
+  let heard = false;
+  r0.onresult = e => { heard = true; let t = ''; for (const x of e.results) t += x[0].transcript; input.value = base + t; syncInput(); };
+  r0.onerror = e => {
+    const blocked = ['not-allowed', 'service-not-allowed', 'audio-capture', 'network'].includes(e.error);
+    stopDictation();
+    if (blocked) dictationHelp('The microphone isn’t available to this page.');
+    else if (e.error === 'no-speech') toast('Didn’t hear anything. Tap the microphone to try again.');
+  };
+  r0.onend = () => { if (rec === r0){ rec = null; setMic(false); if (heard) input.focus(); } };
+  try { r0.start(); rec = r0; setMic(true); input.focus(); }
+  catch { stopDictation(); dictationHelp('Dictation couldn’t start here.'); }
+}
+$('#fileInput').addEventListener('change', e => { addFiles(e.target.files); e.target.value = ''; });
+
+const input = $('#input');
+function syncInput(){ input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 160) + 'px'; if (state.busy !== 'chat') $('#send').disabled = !input.value.trim(); fhp(); }
+input.addEventListener('input', syncInput);
+input.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || e.shiftKey || e.isComposing) return;
+  if (prefs().enterSends || e.metaKey || e.ctrlKey){ e.preventDefault(); $('#composer').requestSubmit(); }
+});
+$('#composer').addEventListener('submit', e => {
+  e.preventDefault();
+  if (state.busy === 'chat'){ ctl?.abort(); return; }
+  const text = input.value.trim();
+  if (!text || state.busy) return;
+  input.value = ''; syncInput();
+  sendMessage(text);
+});
+
+applyPrefs();
+render();
+boot();
+</script>
+
+</body></html>

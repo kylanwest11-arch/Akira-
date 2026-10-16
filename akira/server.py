@@ -1,7 +1,16 @@
 """Akira's HTTP API, for websites and apps.
 
     python3 -m akira.server                 # http://localhost:8000
-    AKIRA_API_KEYS=key1,key2 AKIRA_ORIGINS=https://mysite.com python3 -m akira.server
+    AKIRA_DEVICE=none AKIRA_ORIGINS=https://mysite.com python3 -m akira.server     # for a public website
+
+Settings (environment variables)
+    ANTHROPIC_API_KEY        turns on the cloud side (CAC)
+    AKIRA_ORIGINS            websites allowed to call this server, comma separated (default: any)
+    AKIRA_API_KEYS           if set, requests must send Authorization: Bearer <one of these>
+    AKIRA_DEVICE             "demo" (sample personal data, default) or "none" (public websites)
+    AKIRA_CHATS_PER_MINUTE   per visitor IP (default 12); also AKIRA_TRANSCRIBES_PER_MINUTE, AKIRA_LISTENS_PER_MINUTE
+    AKIRA_MODELS             folder with trained brains (default: models)
+    AKIRA_PUBLIC_URL         this server's public address, if it sits behind a proxy that hides it
 
 Endpoints
     GET  /v1/status             which brains exist, which are trained, whether the cloud is connected
@@ -11,6 +20,7 @@ Endpoints
     POST /v1/chat               {"messages": [...], "images": [...], "modality": "text"|"audio"|"screen",
                                  "session": "...", "stream": true}
                                 streams Server-Sent Events: route, understood, tool, text, done
+    GET  /app                   the full Akira app, connected to this server
     GET  /embed.js              drop-in chat widget for any website
     GET  /                      demo page
 """
@@ -19,6 +29,7 @@ import base64
 import json
 import os
 import threading
+import time
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -26,6 +37,7 @@ from fastapi.responses import FileResponse, JSONResponse, Response, StreamingRes
 from pydantic import BaseModel, Field
 
 from .assistant import Akira
+from .device import DemoDevice, DeviceData
 
 WEB = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "web")
 API_KEYS = {k.strip() for k in os.environ.get("AKIRA_API_KEYS", "").split(",") if k.strip()}
@@ -36,7 +48,35 @@ IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 app = FastAPI(title="Akira", version="0.1")
 app.add_middleware(CORSMiddleware, allow_origins=ORIGINS, allow_methods=["GET", "POST"],
                    allow_headers=["Authorization", "Content-Type"])
-akira = Akira(models_dir=os.environ.get("AKIRA_MODELS", "models"))
+# AKIRA_DEVICE=demo uses the sample messages/calendar/files; "none" (for public websites) has no personal data
+_device = DemoDevice() if os.environ.get("AKIRA_DEVICE", "demo") == "demo" else DeviceData()
+akira = Akira(device=_device, models_dir=os.environ.get("AKIRA_MODELS", "models"))
+
+# Per-visitor limits, so a public site can't run up your cloud bill: requests per minute per IP address
+LIMITS = {"/v1/chat": int(os.environ.get("AKIRA_CHATS_PER_MINUTE", "12")),
+          "/v1/transcribe": int(os.environ.get("AKIRA_TRANSCRIBES_PER_MINUTE", "60")),
+          "/v1/listen": int(os.environ.get("AKIRA_LISTENS_PER_MINUTE", "240"))}
+_hits = {}
+_hits_lock = threading.Lock()
+
+
+@app.middleware("http")
+async def rate_limit(request: Request, call_next):
+    limit = LIMITS.get(request.url.path) if request.method == "POST" else None
+    if limit:
+        forwarded = request.headers.get("x-forwarded-for", "")
+        ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "?")
+        now = time.time()
+        with _hits_lock:
+            if len(_hits) > 50_000:
+                _hits.clear()
+            recent = [t for t in _hits.get((ip, request.url.path), []) if now - t < 60]
+            if len(recent) >= limit:
+                return JSONResponse({"detail": "Too many requests. Wait a minute and try again."}, status_code=429,
+                                    headers={"Retry-After": "60"})
+            recent.append(now)
+            _hits[(ip, request.url.path)] = recent
+    return await call_next(request)
 
 
 def check_key(request: Request):
@@ -49,7 +89,7 @@ def check_key(request: Request):
 
 class Message(BaseModel):
     role: str
-    content: str = Field(max_length=100_000)
+    content: str = Field(max_length=400_000)   # Workspace projects send their sources along
 
 
 class Image(BaseModel):
@@ -205,6 +245,15 @@ def embed():
 @app.get("/favicon.ico")
 def favicon():
     return Response(status_code=204)
+
+
+@app.get("/app")
+def akira_app(request: Request):
+    """The full Akira app (web/app.html), already pointed at this server."""
+    html = open(os.path.join(WEB, "app.html"), encoding="utf-8").read()
+    base = os.environ.get("AKIRA_PUBLIC_URL") or str(request.base_url).rstrip("/")
+    html = html.replace('<meta name="akira-server" content="">', f'<meta name="akira-server" content="{base}">', 1)
+    return Response(html, media_type="text/html")
 
 
 @app.get("/")

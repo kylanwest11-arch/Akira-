@@ -3,3 +3,7 @@ models/
 __pycache__/
 *.pt
 .pytest_cache/
+
+# trained brains for serving (scripts/export_models.py) are kept
+!release/
+!release/*.pt
