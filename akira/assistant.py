@@ -197,8 +197,13 @@ class Akira:
 
         # native path: device facts first, then the on-device language brain
         if route.local_intents:
-            for ev in self.local_answer(text, route.local_intents, prefetched):
-                yield ev
+            events = list(self.local_answer(text, route.local_intents, prefetched))
+            if not any(e["type"] == "text" for e in events):
+                sources = [i for i in route.local_intents if i not in ("calculator", "clock", "settings")] or route.local_intents
+                events.append({"type": "text", "text": f"I can't see your {', '.join(sources)} from here. On your own device, "
+                                                       "Akira answers this without using the cloud. Here, I can help you "
+                                                       "draft a reply or plan instead."})
+            yield from events
             yield {"type": "done", "engine": "device"}
             return
         if brain.family == "arc" and protocol.ARC_MAKE.search(text):

@@ -222,3 +222,10 @@ def test_app_is_served_pointed_at_this_server():
     from akira import server
     r = TestClient(server.app).get("/app")
     assert r.status_code == 200 and 'name="akira-server" content="http://testserver"' in r.text
+
+
+def test_website_mode_explains_instead_of_going_silent():
+    from akira.device import DeviceData
+    a = Akira(device=DeviceData(), models_dir="/nonexistent")
+    out = text_of(a.respond([{"role": "user", "content": "what did Thomas text me?"}]))
+    assert "can't see your messages" in out
