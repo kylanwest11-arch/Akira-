@@ -1,0 +1,8 @@
+torch
+numpy
+tokenizers
+pyarrow
+fastapi
+uvicorn
+anthropic
+pytest
