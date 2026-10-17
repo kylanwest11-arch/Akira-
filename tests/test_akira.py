@@ -272,3 +272,41 @@ def test_bing_links_are_decoded():
     finally:
         urllib.request.urlopen = orig
     assert r == [{"title": "Best pizza", "url": target, "snippet": "Deep dish."}]
+
+
+FAKE_PAGE = """<html><head><title>Riverbook News</title></head><body>
+<nav><a href="/">Home</a><a href="/about">About us</a></nav>
+<svg><title>logo</title></svg>
+<h1>Today at Riverbook</h1>
+<p>The split keyboard ships next month, the team announced on Friday after the final review was signed off.</p>
+<a href="/news/keyboard">Keyboard ships next month</a> <a href="https://example.com/x#top">Partner page</a>
+<a href="javascript:void(0)">Menu</a><a href="mailto:a@b.c">Email</a><a href="/news/keyboard">Keyboard ships next month</a>
+</body></html>"""
+
+
+def test_browse_reads_a_page_and_its_links(monkeypatch):
+    from akira import web
+    monkeypatch.setattr(web, "_get", lambda url, accept="text/html": FAKE_PAGE)
+    page = web.visit("riverbook.io")
+    assert page["title"] == "Riverbook News" and page["url"] == "https://riverbook.io"
+    assert "split keyboard ships" in page["excerpt"] and page["headings"] == ["Today at Riverbook"]
+    urls = [l["url"] for l in page["links"]]
+    assert "https://riverbook.io/news/keyboard" in urls and "https://example.com/x" in urls
+    assert len(urls) == len(set(urls)) and not any(u.startswith(("javascript", "mailto")) for u in urls)
+
+
+def test_browse_targets_and_following_links(monkeypatch):
+    from akira import web
+    assert web.browse_target("go to bbc.com") == {"url": "https://bbc.com"}
+    assert web.browse_target("search bbc.com for climate") == {"site_search": ("bbc.com", "climate")}
+    assert web.browse_target("take me to wikipedia") == {"find_site": "wikipedia"}
+    assert web.browse_target("go to the gym tomorrow") is None
+    assert web.browse_target("write a poem about rain") is None
+    shown = "Links:\n1. [Home](https://riverbook.io/)\n2. [News](https://riverbook.io/news)"
+    hist = [{"role": "user", "content": "go to riverbook.io"}, {"role": "assistant", "content": shown}]
+    assert web.browse_target("open 2", hist) == {"url": "https://riverbook.io/news"}
+    assert web.browse_target("open 7", hist) == {"missing": 7, "count": 2}
+    monkeypatch.setattr(web, "_get", lambda url, accept="text/html": FAKE_PAGE)
+    from akira.device import DeviceData
+    out = text_of(Akira(device=DeviceData(), models_dir="/nonexistent").respond(hist + [{"role": "user", "content": "open 2"}]))
+    assert "Riverbook News" in out and "1. [" in out

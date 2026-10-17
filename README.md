@@ -31,7 +31,9 @@ still talking.
 
 **Internet access:** questions about anything current (news, prices, "search for…", a link) and factual questions
 go online. Akira searches the web (DuckDuckGo, with Bing as a backup) and Wikipedia itself (`akira/web.py`) and
-answers with links to its sources. No API keys. `AKIRA_WEB=off` turns it off.
+answers with links to its sources. It also **browses websites**: "go to bbc.com" opens the page and shows its main
+text, sections and numbered links; "open 3" follows a link; "take me to wikipedia" finds the site first; "search
+python.org for asyncio" searches within a site. No API keys. `AKIRA_WEB=off` turns it off.
 
 **Akira uses no third-party AI and no API keys.** Every answer comes from Akira's own brains, the device tools, or
 the internet. Answer quality grows with training: bigger brains and more training (a GPU) make Akira smarter.

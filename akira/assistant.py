@@ -122,6 +122,23 @@ class Akira:
                 yield {"type": "understood", "notes": done["understood"], "sources": sorted(prefetched)}
 
         brain = route.brain
+
+        # browsing: open a website, follow a link Akira listed, or search within a site
+        if os.environ.get("AKIRA_WEB", "on") != "off" and not images and brain.family in ("core", "una"):
+            target = web.browse_target(text, history)
+            if target:
+                yield {"type": "tool", "name": "browse", "input": target, "where": "internet"}
+                try:
+                    shown, sources = web.browse(target)
+                except Exception as e:
+                    reason = getattr(e, "code", None) or type(e).__name__
+                    shown, sources = (f"I couldn't open that page ({reason}). The site may be down or may block "
+                                      "automated visits."), []
+                if shown:
+                    yield {"type": "text", "text": shown}
+                    yield {"type": "done", "engine": "web", "sources": sources}
+                    return
+
         if route.placement == "local":
             answered = False
             for ev in self.local_answer(text, route.local_intents, prefetched):

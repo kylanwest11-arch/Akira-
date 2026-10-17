@@ -162,6 +162,169 @@ def read(url, max_chars=6000):
     return {"url": url, "title": p.title.strip(), "text": text[:max_chars]}
 
 
+# --- browsing: open a website, see its links, follow them -------------------------------
+class _Page(HTMLParser):
+    """Collects a page's title, headings, main text and links."""
+    SKIP = {"script", "style", "noscript", "svg", "form", "template"}
+    CHROME = {"nav", "footer", "header", "aside"}
+
+    def __init__(self, base):
+        super().__init__()
+        self.base, self.skip, self.chrome = base, 0, 0
+        self.title, self.headings, self.parts, self.links = "", [], [], []
+        self._in, self._heading, self._link = None, None, None
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        if tag in self.SKIP:
+            self.skip += 1
+        if tag in self.CHROME:
+            self.chrome += 1
+        if tag == "title" and not self.skip and not self.title:   # the page's own title, not an icon's
+            self._in = "title"
+        if tag in ("h1", "h2", "h3") and not self.skip:
+            self._heading = []
+        if tag == "a" and a.get("href") and not self.skip:
+            self._link = [a["href"], []]
+        if tag in ("p", "br", "li", "h1", "h2", "h3", "h4", "tr", "div", "section", "article"):
+            self.parts.append("\n")
+
+    def handle_endtag(self, tag):
+        if tag in self.SKIP and self.skip:
+            self.skip -= 1
+        if tag in self.CHROME and self.chrome:
+            self.chrome -= 1
+        if tag == "title":
+            self._in = None
+        if tag in ("h1", "h2", "h3") and self._heading is not None:
+            h = " ".join("".join(self._heading).split())
+            if 2 < len(h) < 120:
+                self.headings.append(h)
+            self._heading = None
+        if tag == "a" and self._link:
+            href, words = self._link
+            text = " ".join("".join(words).split())
+            self.links.append((href, text))
+            self._link = None
+
+    def handle_data(self, data):
+        if self._in == "title":
+            self.title += data
+            return
+        if self.skip:
+            return
+        if self._heading is not None:
+            self._heading.append(data)
+        if self._link:
+            self._link[1].append(data)
+        if not self.chrome:
+            self.parts.append(data)
+
+
+def visit(url, max_links=15):
+    """Open a page: its title, a readable excerpt, its sections and its links (absolute, de-duplicated)."""
+    if not re.match(r"^https?://", url):
+        url = "https://" + url
+    p = _Page(url)
+    p.feed(_get(url))
+    text = re.sub(r"\n\s*\n+", "\n\n", re.sub(r"[ \t]+", " ", "".join(p.parts))).strip()
+    paragraphs = [t.strip() for t in text.split("\n") if len(t.strip()) > 60]
+    links, seen = [], set()
+    for href, label in p.links:
+        if not label or len(label) < 2 or href.startswith(("javascript:", "mailto:", "tel:", "#")):
+            continue
+        full = urllib.parse.urljoin(url, href).split("#")[0]
+        if full in seen or full.rstrip("/") == url.rstrip("/") or not full.startswith("http"):
+            continue
+        seen.add(full)
+        links.append({"text": label[:90], "url": full})
+    return {"url": url, "title": " ".join(p.title.split()) or url, "excerpt": "\n\n".join(paragraphs[:4])[:1500],
+            "headings": list(dict.fromkeys(p.headings))[:8], "links": links[:max_links], "all_links": len(links)}
+
+
+def page_markdown(page):
+    out = [f"**{page['title']}**  \n{page['url']}"]
+    if page["excerpt"]:
+        out.append(page["excerpt"])
+    else:
+        out.append("_This page shows little text without running its scripts, so here are its links._")
+    if page["headings"]:
+        out.append("**On this page:** " + " · ".join(page["headings"]))
+    if page["links"]:
+        out.append("**Links:**\n" + "\n".join(f"{i}. [{l['text']}]({l['url']})" for i, l in enumerate(page["links"], 1)))
+        out.append(f"Say \"open 1\" to {page['links'][0]['text'][:40]!r}, or any other number, to follow a link.")
+    return "\n\n".join(out)
+
+
+DOMAIN = re.compile(r"\b((?:[a-z0-9-]+\.)+(?:com|org|net|edu|gov|io|ai|co|uk|us|ca|de|fr|jp|info|dev|app|news|tv|me|ly|gg))\b(/[^\s]*)?", re.I)
+GO = re.compile(r"\b(go to|goto|open( up)?|visit|browse( to)?|navigate to|take me to|pull up|load|check out|show me)\b", re.I)
+FOLLOW = re.compile(r"^\s*(?:please\s+)?(?:open|click|follow|go to|read|visit|show me)?\s*(?:link|result|number|#)?\s*(\d{1,2})\s*[.!]?\s*$", re.I)
+SITE_SEARCH = re.compile(r"\bsearch\s+((?:[a-z0-9-]+\.)+[a-z]{2,})\s+for\s+(.+)$", re.I)
+LINK_LINE = re.compile(r"^(\d{1,2})\. \[[^\]]*\]\((https?://[^)]+)\)", re.M)
+
+
+def browse_target(text, history=()):
+    """If the message asks to open a website or follow a link Akira listed, return the URL (or a site search)."""
+    t = text.strip()
+    m = FOLLOW.match(t)
+    if m:
+        for msg in reversed(list(history)):
+            if msg.get("role") == "assistant":
+                links = dict(LINK_LINE.findall(msg.get("content", "")))
+                if links:
+                    return {"url": links.get(m.group(1))} if m.group(1) in links else {"missing": int(m.group(1)), "count": len(links)}
+                break
+        return None
+    m = SITE_SEARCH.search(t)
+    if m:
+        return {"site_search": (m.group(1), m.group(2).rstrip("?.! "))}
+    url = URL.search(t)
+    if url:
+        return {"url": url.group(0).rstrip(".,)")}
+    if GO.search(t):
+        d = DOMAIN.search(t)
+        if d:
+            return {"url": "https://" + d.group(1) + (d.group(2) or "")}
+        name = re.sub(r"(?i).*?\b(go to|goto|open( up)?|visit|browse( to)?|navigate to|take me to|pull up|load|check out|show me)\b\s*", "", t)
+        name = re.sub(r"(?i)\b(the |website|site|homepage|home page|web ?page|page|please|for me|official)\b", " ", name).strip(" ?.!")
+        words = name.lower().split()
+        webby = re.search(r"(?i)\b(website|site|homepage|home page|web ?page)\b", t)
+        if name and len(words) <= 3 and (webby or not set(words) & PLACES):
+            return {"find_site": name}
+    return None
+
+
+# everyday places people "go to" that aren't websites
+PLACES = set("""store shop shops school work office bed sleep gym park church doctor dentist bathroom toilet home house mall
+beach movies cinema bank hospital class practice store's grocery market restaurant party airport station church
+tomorrow today tonight later now""".split())
+
+
+def browse(target):
+    """Carry out a browse_target(): open the page (finding the site first if needed) and describe it."""
+    if "missing" in target:
+        return f"There's no link {target['missing']}: the last page I showed had {target['count']} links.", []
+    if "site_search" in target:
+        site, q = target["site_search"]
+        results = search(f"site:{site} {q}", 8)
+        if not results:
+            return f"I couldn't find anything for \"{q}\" on {site}.", []
+        return (f"**Results for \"{q}\" on {site}:**\n" + "\n".join(
+            f"{i}. [{r['title']}]({r['url']}): {r['snippet']}" for i, r in enumerate(results, 1))
+            + "\n\nSay \"open 1\" (or any number) to go to a result."), [r["url"] for r in results]
+    url = target.get("url")
+    if not url and target.get("find_site"):
+        name = target["find_site"]
+        results = search(name + " official site", 3)
+        key = re.sub(r"[^a-z0-9]", "", name.lower())
+        match = next((r for r in results if key and key[:6] in re.sub(r"[^a-z0-9]", "", urllib.parse.urlparse(r["url"]).netloc.lower())), None)
+        if match is None:
+            return None, []        # not obviously a website: let Akira answer normally
+        url = match["url"]
+    page = visit(url)
+    return page_markdown(page), [page["url"]]
+
+
 # --- deciding when to go online -------------------------------------------------------
 NEEDS_WEB = re.compile(r"\b(search (the )?(web|internet|online)|search for|google|look (it |this |that )?up|online|"
                        r"latest|news|headlines?|today'?s|this (week|month|year)|right now|currently|current|recent(ly)?|"
