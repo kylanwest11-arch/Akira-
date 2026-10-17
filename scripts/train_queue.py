@@ -22,6 +22,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 QUEUE = os.path.join(ROOT, "models", "queue.json")
 MARKS = os.path.join(ROOT, "models", "jobs")
 os.makedirs(MARKS, exist_ok=True)
+os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")   # Apple-silicon Macs: ops the GPU lacks run on the CPU
 ap = argparse.ArgumentParser()
 ap.add_argument("--queue", default=QUEUE)
 ap.add_argument("--once", action="store_true", help="exit when every job is done instead of waiting for more")
