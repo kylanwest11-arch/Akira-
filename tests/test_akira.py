@@ -229,3 +229,47 @@ def test_website_mode_explains_instead_of_going_silent():
     a = Akira(device=DeviceData(), models_dir="/nonexistent")
     out = text_of(a.respond([{"role": "user", "content": "what did Thomas text me?"}]))
     assert "can't see your messages" in out
+
+
+def test_web_routing_and_keywords():
+    from akira import web
+    assert protocol.route(protocol.Request(text="what's the latest news about NASA?")).web
+    assert protocol.route(protocol.Request(text="search the web for pizza near me")).web
+    assert not protocol.route(protocol.Request(text="write a poem about rain")).web
+    assert web.clean_query("What's the latest news about the James Webb telescope?") == "latest news about the James Webb telescope"
+    assert web.clean_query("Who won the World Series in 2025?") == "Who won the World Series in 2025"
+    assert web.PERSONAL.search("who are you?") and not web.PERSONAL.search("what is photosynthesis?")
+
+
+def test_web_answers_without_a_cloud_key(monkeypatch):
+    from akira import web
+    from akira.device import DeviceData
+    monkeypatch.setattr(web, "search", lambda q, n=5: [{"title": "NASA Webb news", "url": "https://science.nasa.gov/webb", "snippet": "New image."}])
+    monkeypatch.setattr(web, "wikipedia", lambda q: None)
+    a = Akira(device=DeviceData(), models_dir="/nonexistent")
+    evs = list(a.respond([{"role": "user", "content": "latest news about the Webb telescope"}]))
+    assert any(e.get("where") == "internet" for e in evs)
+    assert "science.nasa.gov/webb" in text_of(evs) and evs[-1]["engine"] == "web"
+
+
+def test_bing_links_are_decoded():
+    import base64
+
+    from akira import web
+    target = "https://www.timeout.com/chicago/pizza"
+    u = "a1" + base64.urlsafe_b64encode(target.encode()).decode().rstrip("=")
+    page = f'<li class="b_algo"><h2><a href="https://www.bing.com/ck/a?!&amp;u={u}&amp;ntb=1">Best <b>pizza</b></a></h2><p>Deep dish.</p></li>'
+
+    class R:
+        headers = None
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def read(self, n): return page.encode()
+    import urllib.request
+    orig = urllib.request.urlopen
+    urllib.request.urlopen = lambda *a, **k: R()
+    try:
+        r = web._bing("pizza", 3)
+    finally:
+        urllib.request.urlopen = orig
+    assert r == [{"title": "Best pizza", "url": target, "snippet": "Deep dish."}]

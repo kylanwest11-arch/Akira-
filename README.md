@@ -28,6 +28,11 @@ still talking.
 | Live | Lite → General → Max | speech to text | CTC transformer, 2.1M / 8.2M / 25.6M params, 51 h of LibriSpeech |
 | Cast | Lite → General → Max | live screen viewing + voice | screen reader: finds text lines and reads them with a CNN + LSTM (CTC), 1.1M / 2.7M / 6.2M params, trained on synthetic screen text in 80 fonts; plus Live |
 
+**Internet access:** questions about anything current (news, prices, "search for…", a link) go online. With an
+Anthropic key the cloud brains use Anthropic's web search and web fetch tools; without one, Akira searches the web
+(DuckDuckGo, with Bing as a backup) and Wikipedia itself (`akira/web.py`) and answers with links. `AKIRA_WEB=off`
+turns it off.
+
 With `ANTHROPIC_API_KEY` set, the cloud side runs each tier on a large model (Haiku 5.5 / Sonnet 5.5 /
 Opus 5.5 by tier, set in `akira/brains.py`). Without it, Akira answers with its native brains and the LAC.
 

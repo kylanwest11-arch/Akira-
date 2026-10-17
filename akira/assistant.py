@@ -26,7 +26,7 @@ import uuid
 
 import numpy as np
 
-from . import brains, protocol
+from . import brains, protocol, web
 from .cac import CloudAccessCenter
 from .fhp import Listener
 from .lac import LocalAccessCenter
@@ -211,6 +211,22 @@ class Akira:
                                            "(or connect the cloud side). I can describe the image in words instead."}
             yield {"type": "done", "engine": "device"}
             return
+        # the internet: news, prices and anything current, plus factual questions a small brain would guess at
+        if (os.environ.get("AKIRA_WEB", "on") != "off" and brain.family in ("core", "una") and not images
+                and (route.web or (web.QUESTION.match(text) and brain.family == "core" and not web.PERSONAL.search(text)))):
+            yield {"type": "tool", "name": "web_search", "input": {"query": web.clean_query(text)}, "where": "internet"}
+            try:
+                found, sources = web.answer(text)
+            except Exception:
+                found, sources = None, []
+            if found:
+                yield {"type": "text", "text": found}
+                yield {"type": "done", "engine": "web", "sources": sources}
+                return
+            if route.web:
+                yield {"type": "text", "text": "I couldn't reach the internet just now. Try again in a minute."}
+                yield {"type": "done", "engine": "web"}
+                return
         engine = self.native.best_for(brain.family, brain.rank)
         if engine is None:
             yield {"type": "text", "text": "None of Akira's native brains are trained yet, and the cloud side "

@@ -17,10 +17,21 @@ from . import brains
 
 SYSTEM = """You are Akira, a personal AI assistant. You are one assistant: never mention internal brain names (Core, Arc, Una, Live, Cast), tiers, models or routing.
 You run partly on the user's device. Tools that start with search_, calendar, related, settings, calculator and clock read or change the user's device; use them whenever the answer depends on the user's own messages, people, schedule, files, photos or settings, and never invent personal details.
+You can search the web (web_search) and read pages (web_fetch). Use them for anything current, specific or that you are unsure of, and cite what you used as Markdown links.
 Answer directly first, then add detail when it helps. Use Markdown in text replies."""
 
 FALLBACK_MODELS = {"claude-opus-5-5", "claude-sonnet-5-5"}   # models that accept server-side refusal fallback
 MAX_TOOL_ROUNDS = 6
+
+
+def web_tools(model):
+    """Anthropic's server-side web search and fetch. The newest variants (with result filtering) need Opus or
+    Sonnet; other models get the basic ones. AKIRA_WEB=off turns the internet off."""
+    if os.environ.get("AKIRA_WEB", "on") == "off":
+        return []
+    newest = model.startswith(("claude-opus", "claude-sonnet"))
+    return [{"type": "web_search_20260209" if newest else "web_search_20250305", "name": "web_search", "max_uses": 5},
+            {"type": "web_fetch_20260209" if newest else "web_fetch_20250910", "name": "web_fetch", "max_uses": 3}]
 
 
 class CloudAccessCenter:
@@ -75,7 +86,7 @@ class CloudAccessCenter:
             "model": brain.model,
             "max_tokens": 64000,
             "system": system,
-            "tools": self.lac.tool_definitions(),
+            "tools": self.lac.tool_definitions() + web_tools(brain.model),
             "output_config": {"effort": brain.effort},
         }
         use_fallback = brain.model in FALLBACK_MODELS
@@ -99,6 +110,9 @@ class CloudAccessCenter:
             if response.stop_reason == "pause_turn":
                 messages.append({"role": "assistant", "content": response.content})
                 continue
+            for b in response.content:
+                if b.type == "server_tool_use":    # web search / fetch, run by the cloud
+                    yield ("tool", {"name": b.name, "input": b.input, "where": "internet"})
             tool_uses = [b for b in response.content if b.type == "tool_use"]
             if not tool_uses:
                 return

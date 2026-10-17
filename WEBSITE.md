@@ -23,6 +23,7 @@ works: Render, Railway, Fly.io, Google Cloud Run, DigitalOcean App Platform, or 
 |---|---|---|
 | `AKIRA_ORIGINS` | `https://yourwebsite.com` | Only your site may call the server. Separate several sites with commas. |
 | `ANTHROPIC_API_KEY` | your key from console.anthropic.com | Optional, but recommended. Turns on the cloud side, so answers are good while Akira's own brains are still small. |
+| `AKIRA_WEB` | `on` (default) or `off` | Internet access. With a key, the cloud brains use Anthropic's web search and page reading; without one, Akira searches the web and Wikipedia itself. |
 | `AKIRA_CHATS_PER_MINUTE` | `12` (default) | How many messages one visitor can send per minute, so nobody can run up your cloud bill. |
 
 5. Deploy. Your host gives you an address such as `https://akira-xyz.onrender.com`. That is your

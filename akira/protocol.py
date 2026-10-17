@@ -17,6 +17,7 @@ import re
 from dataclasses import dataclass, field
 
 from . import brains
+from .web import NEEDS_WEB
 
 CODE = re.compile(r"```|\b(def|class|function|const|let|var|import|return|async|await)\b|=>|\{\s*\}|;\s*$|"
                   r"\b(bug|debug|stack ?trace|traceback|exception|compile|compiler|refactor|regex|sql|python|javascript|"
@@ -64,10 +65,11 @@ class Route:
     placement: str               # local | cloud | both
     local_intents: list
     reasons: list
+    web: bool = False            # the answer needs the internet (news, prices, "search for", a link, ...)
 
     def to_dict(self):
         return {"brain": self.brain.to_dict(), "placement": self.placement,
-                "local_intents": self.local_intents, "reasons": self.reasons}
+                "local_intents": self.local_intents, "reasons": self.reasons, "web": self.web}
 
 
 def pick_family(req: Request, reasons):
@@ -158,4 +160,7 @@ def route(req: Request) -> Route:
         reasons.append("LAC gathers local context, CAC reasons over it")
     else:
         placement = "cloud"
-    return Route(brain, placement, intents, reasons)
+    needs_web = bool(NEEDS_WEB.search(req.text)) and family in ("core", "una")
+    if needs_web:
+        reasons.append("needs current information -> search the internet")
+    return Route(brain, placement, intents, reasons, needs_web)
