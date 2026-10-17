@@ -4,7 +4,7 @@
     AKIRA_DEVICE=none AKIRA_ORIGINS=https://mysite.com python3 -m akira.server     # for a public website
 
 Settings (environment variables)
-    ANTHROPIC_API_KEY        turns on the cloud side (CAC)
+    AKIRA_WEB                "on" (default) or "off": internet access (search, Wikipedia, reading pages)
     AKIRA_ORIGINS            websites allowed to call this server, comma separated (default: any)
     AKIRA_API_KEYS           if set, requests must send Authorization: Bearer <one of these>
     AKIRA_DEVICE             "demo" (sample personal data, default) or "none" (public websites)

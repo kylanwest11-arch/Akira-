@@ -4,9 +4,8 @@
     wikipedia("photosynthesis")          -> {"title", "url", "summary"} or None
     read("https://example.com/page")     -> {"url", "title", "text"}             (a page as plain text)
 
-Used by Akira's native brains when the cloud side isn't connected. With an Anthropic key, the cloud
-brains search with Anthropic's web search tool instead (see cac.py). Results are cached for ten
-minutes so a conversation doesn't repeat the same lookups.
+This is all of Akira's internet access: no API keys and no third-party AI. Results are cached for
+ten minutes so a conversation doesn't repeat the same lookups.
 """
 import html
 import json

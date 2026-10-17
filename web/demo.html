@@ -32,7 +32,7 @@
   <div class="try" id="try"></div>
 
   <h2>Brains</h2>
-  <div class="tbl"><table id="brains"><thead><tr><th>Brain</th><th>Job</th><th>On-device model</th><th>Cloud model</th></tr></thead><tbody><tr><td colspan="4">Loading…</td></tr></tbody></table></div>
+  <div class="tbl"><table id="brains"><thead><tr><th>Brain</th><th>Job</th><th>Akira model</th></tr></thead><tbody><tr><td colspan="4">Loading…</td></tr></tbody></table></div>
 
   <h2>Training</h2>
   <div class="tbl"><table id="training"><thead><tr><th>Job</th><th>Status</th><th>Budget</th><th>Latest</th></tr></thead><tbody></tbody></table></div>
@@ -73,13 +73,12 @@
     var rows = s.brains.map(function (b) {
       var n = nat[b.id];
       var native = n ? '<span class="pill ok">trained · ' + (n.parameters / 1e6).toFixed(1) + 'M params</span>' : '<span class="pill">not trained yet</span>';
-      var cloud = s.cloud ? b.model : '<span class="pill">not connected</span>';
-      return "<tr><td><b>" + b.label + "</b></td><td>" + b.job + "</td><td>" + native + "</td><td>" + cloud + "</td></tr>";
+      return "<tr><td><b>" + b.label + "</b></td><td>" + b.job + "</td><td>" + native + "</td></tr>";
     });
     var r = s.router;
     rows.unshift("<tr><td><b>Router</b></td><td>Alternate Protocol</td><td>" +
       (r.trained ? '<span class="pill ok">trained · ' + Math.round(r.metrics.family_acc * 100) + '% routing accuracy</span>' : '<span class="pill">rules only</span>') +
-      "</td><td>—</td></tr>");
+      "</td></tr>");
     document.querySelector("#brains tbody").innerHTML = rows.join("");
   });
 </script>

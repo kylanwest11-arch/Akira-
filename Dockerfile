@@ -1,6 +1,6 @@
 # Akira server: the API, the full app at /app, and the embeddable widget at /embed.js.
 #   docker build -t akira .
-#   docker run -p 8000:8000 -e AKIRA_ORIGINS=https://yoursite.com -e ANTHROPIC_API_KEY=... akira
+#   docker run -p 8000:8000 -e AKIRA_ORIGINS=https://yoursite.com akira
 FROM python:3.12-slim
 WORKDIR /app
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu

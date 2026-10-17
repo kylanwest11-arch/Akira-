@@ -13,10 +13,10 @@ respond() yields small dict events, in order:
 
 Where the answer comes from:
     local   the LAC answers from device data directly; nothing leaves the device
-    cloud   the CAC runs the brain on a large cloud model
-    both    the LAC gathers context, the CAC reasons over it
-With no cloud credential, every request is answered by Akira's native brains
-(the models trained from scratch in akira/native), plus the LAC.
+    cloud   the Akira server answers with its larger brains (Pro, Ultra, ...) and the internet
+    both    the LAC gathers context, the Akira server reasons over it
+Every answer comes from Akira's own brains (trained from scratch in akira/native),
+the LAC's device tools, or the internet (akira/web.py). No third-party AI is used.
 """
 import base64
 import os
@@ -27,7 +27,6 @@ import uuid
 import numpy as np
 
 from . import brains, protocol, web
-from .cac import CloudAccessCenter
 from .fhp import Listener
 from .lac import LocalAccessCenter
 from .native import arc as arc_mod
@@ -62,7 +61,6 @@ class Latest:
 class Akira:
     def __init__(self, device=None, models_dir="models"):
         self.lac = LocalAccessCenter(device)
-        self.cac = CloudAccessCenter(self.lac)
         self.native = NativeBrains(models_dir)
         self.router = Router.load_default(models_dir)
         self.arc = Latest(arc_mod.load_best, "arc", models_dir)
@@ -85,7 +83,7 @@ class Akira:
 
     def status(self):
         return {
-            "cloud": self.cac.available,
+            "web": os.environ.get("AKIRA_WEB", "on") != "off",
             "router": {"trained": self.router is not None, "metrics": self.router.metrics if self.router else None},
             "native_brains": {**{b: self.native.get(b).info() for b in self.native.available()},
                               **{m.info["brain"]: m.info for m in (self.arc.get(), self.vision.get(), self.cast.get(), self.live.get()) if m}},
@@ -105,12 +103,11 @@ class Akira:
     def respond(self, messages, images=None, modality="text", family="auto", tier="auto",
                 session=None, stop=None, prefer="auto"):
         """messages: [{"role": "user"|"assistant", "content": str}], ending with the user's turn.
-        prefer: "auto", "native" (never use the cloud) or "cloud"."""
+        prefer is accepted for compatibility and ignored: every brain is Akira's own."""
         text = messages[-1]["content"] if messages else ""
         history = messages[:-1]
-        cloud_ok = self.cac.available and prefer != "native"
         req = protocol.Request(text=text, images=images or [], modality=modality, family=family, tier=tier,
-                               cloud_available=cloud_ok, router=self.router)
+                               router=self.router)
         route = protocol.route(req)
         yield {"type": "route", **route.to_dict()}
 
@@ -145,7 +142,7 @@ class Akira:
                     yield {"type": "image", "media_type": "image/png", "data": base64.b64encode(png).decode()}
                 yield {"type": "done", "engine": f"native:{arc.brain}"}
                 return
-            if arc and not cloud_ok:
+            if arc:
                 yield {"type": "text", "text": "I can draw these so far: " + ", ".join(arc_mod.CLASSES)
                                                + ". Ask for one of them, like \"draw a horse\"."}
                 yield {"type": "done", "engine": f"native:{arc.brain}"}
@@ -164,12 +161,11 @@ class Akira:
                 yield {"type": "tool", "name": "read_screen", "input": {"lines": len(lines)}, "where": "device"}
                 if screen_text:
                     prefetched = {**prefetched, "text_read_from_screen": screen_text[:6000]}
-            if not cloud_ok:
-                yield from self._native_screen_answer(text, screen_text, brain, history, stop)
-                return
+            yield from self._native_screen_answer(text, screen_text, brain, history, stop)
+            return
 
-        # Arc looks at a photo with its own eyes when the cloud isn't there
-        if images and not cloud_ok:
+        # Arc looks at a photo with its own eyes
+        if images:
             vision = self.vision.get()
             if vision is not None:
                 try:
@@ -186,16 +182,7 @@ class Akira:
                     yield {"type": "done", "engine": f"native:{vision.brain}"}
                     return
 
-        if cloud_ok and route.placement in ("cloud", "both"):
-            try:
-                for kind, payload in self.cac.stream(brain, history, text, images, prefetched, stop=stop):
-                    yield {"type": kind, "text": payload} if kind == "text" else {"type": "tool", **payload}
-                yield {"type": "done", "engine": f"cloud:{brain.model}"}
-                return
-            except Exception as e:   # cloud unreachable: fall through to the native brains
-                yield {"type": "notice", "text": f"Cloud unavailable ({type(e).__name__}); answering on-device."}
-
-        # native path: device facts first, then the on-device language brain
+        # device facts first, then the internet, then Akira's language brain
         if route.local_intents:
             events = list(self.local_answer(text, route.local_intents, prefetched))
             if not any(e["type"] == "text" for e in events):
@@ -207,8 +194,8 @@ class Akira:
             yield {"type": "done", "engine": "device"}
             return
         if brain.family == "arc" and protocol.ARC_MAKE.search(text):
-            yield {"type": "text", "text": "Image creation needs Arc's image model, which isn't trained yet "
-                                           "(or connect the cloud side). I can describe the image in words instead."}
+            yield {"type": "text", "text": "Image creation needs Arc's image model, which isn't trained yet. "
+                                           "I can describe the image in words instead."}
             yield {"type": "done", "engine": "device"}
             return
         # the internet: news, prices and anything current, plus factual questions a small brain would guess at
@@ -229,8 +216,8 @@ class Akira:
                 return
         engine = self.native.best_for(brain.family, brain.rank)
         if engine is None:
-            yield {"type": "text", "text": "None of Akira's native brains are trained yet, and the cloud side "
-                                           "isn't connected. Run scripts/train_core.sh or set ANTHROPIC_API_KEY."}
+            yield {"type": "text", "text": "None of Akira's language brains are trained yet. "
+                                           "Train them with scripts/train_queue.py or the Colab notebook."}
             yield {"type": "done", "engine": "none"}
             return
         convo = [{"role": "system", "content": NATIVE_SYSTEM}] + history[-6:] + [{"role": "user", "content": text}]
@@ -239,10 +226,10 @@ class Akira:
         yield {"type": "done", "engine": f"native:{engine.brain}"}
 
     def _native_screen_answer(self, question, screen_text, brain, history, stop):
-        """Answer about the user's screen with no cloud: show what Cast read, then let Core answer from it."""
+        """Answer about the user's screen: show what Cast read, then let Core answer from it."""
         if screen_text is None:
-            yield {"type": "text", "text": "Cast's screen reader isn't trained yet, so I can't read your screen on this "
-                                           "device. Connect the cloud side, or try again once training finishes."}
+            yield {"type": "text", "text": "Cast's screen reader isn't trained yet, so I can't read your screen. "
+                                           "Try again once its training finishes."}
             yield {"type": "done", "engine": "none"}
             return
         if not screen_text.strip():

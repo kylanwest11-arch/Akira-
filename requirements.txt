@@ -4,5 +4,4 @@ tokenizers
 pyarrow
 fastapi
 uvicorn
-anthropic
 pytest

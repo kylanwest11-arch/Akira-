@@ -4,7 +4,8 @@ For every request it decides, in a few milliseconds and without a cloud call:
 
   1. which intelligence:   Core, Arc, Una, Live or Cast
   2. which tier:           Standard/Pro/Ultra (Core) or Lite/General/Max (specialists)
-  3. where it runs:        local (LAC), cloud (CAC) or both
+  3. where it runs:        local (LAC, on the device), cloud (CAC: the Akira server's larger brains
+                           and the internet) or both
 
 The user never picks. They just talk to Akira.
 
@@ -157,7 +158,7 @@ def route(req: Request) -> Route:
         reasons.append("simple on-device task -> answer locally, nothing leaves the device")
     elif intents:
         placement = "both"
-        reasons.append("LAC gathers local context, CAC reasons over it")
+        reasons.append("LAC gathers local context, the Akira server reasons over it")
     else:
         placement = "cloud"
     needs_web = bool(NEEDS_WEB.search(req.text)) and family in ("core", "una")

@@ -183,7 +183,7 @@
     var n = Object.keys(s.native_brains || {}).length;
     liveNative = Object.keys(s.native_brains || {}).some(function (k) { return k.indexOf("live-") === 0; });
     if (liveNative) $(".mic").hidden = false;
-    st.textContent = s.cloud ? "on-device + cloud" : n ? "on-device" : "setting up";
+    st.textContent = n ? (s.web ? "Akira · online" : "Akira") : "setting up";
   }).catch(function () { st.textContent = "offline"; });
 
   function bubble(cls, html) {

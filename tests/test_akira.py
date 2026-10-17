@@ -5,7 +5,6 @@ import sys
 import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-os.environ.setdefault("AKIRA_CLOUD", "off")
 
 from akira import protocol  # noqa: E402
 from akira.assistant import Akira  # noqa: E402

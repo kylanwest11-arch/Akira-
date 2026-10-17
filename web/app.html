@@ -1837,7 +1837,7 @@ const ACT = {
       if (backend !== 'claude'){ sample = akiraServer(prefs().server); backend = 'akira'; }
       const trained = Object.keys(st.native_brains || {});
       render();
-      $('#srvMsg').textContent = `Connected. ${st.cloud ? 'Cloud side on. ' : ''}Trained brains: ${trained.length ? trained.join(', ') : 'none yet'}.`;
+      $('#srvMsg').textContent = `Connected. ${st.web ? 'Internet on. ' : ''}Trained brains: ${trained.length ? trained.join(', ') : 'none yet'}.`;
     } catch (e) {
       msg.textContent = 'Couldn’t reach that server. Check the address, that the server is running, and that AKIRA_ORIGINS includes this site.';
     }

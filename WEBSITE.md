@@ -22,8 +22,7 @@ works: Render, Railway, Fly.io, Google Cloud Run, DigitalOcean App Platform, or 
 | Variable | Value | Why |
 |---|---|---|
 | `AKIRA_ORIGINS` | `https://yourwebsite.com` | Only your site may call the server. Separate several sites with commas. |
-| `ANTHROPIC_API_KEY` | your key from console.anthropic.com | Optional, but recommended. Turns on the cloud side, so answers are good while Akira's own brains are still small. |
-| `AKIRA_WEB` | `on` (default) or `off` | Internet access. With a key, the cloud brains use Anthropic's web search and page reading; without one, Akira searches the web and Wikipedia itself. |
+| `AKIRA_WEB` | `on` (default) or `off` | Internet access: Akira searches the web and Wikipedia and reads pages itself. No API key. |
 | `AKIRA_CHATS_PER_MINUTE` | `12` (default) | How many messages one visitor can send per minute, so nobody can run up your cloud bill. |
 
 5. Deploy. Your host gives you an address such as `https://akira-xyz.onrender.com`. That is your
@@ -35,7 +34,7 @@ To run it on your own machine instead:
 
 ```bash
 docker build -t akira .
-docker run -p 8000:8000 -e AKIRA_ORIGINS=https://yourwebsite.com -e ANTHROPIC_API_KEY=sk-ant-... akira
+docker run -p 8000:8000 -e AKIRA_ORIGINS=https://yourwebsite.com akira
 ```
 
 ## 2A. Use the full Akira app
@@ -88,7 +87,7 @@ Most hosts redeploy automatically when the repository changes.
 
 | Brain | Status |
 |---|---|
-| Core (chat) | Core Standard is training. Weak on its own, so add `ANTHROPIC_API_KEY` for good answers now. |
+| Core (chat) | Core Standard is trained; Core Pro is training. Small, so it answers simple things well and makes mistakes on harder ones. Factual and current questions are answered from the internet. |
 | Router | Trained. Picks the brain for each request. |
-| Arc, Una, Live, Cast | Training is queued over the next few days. Until each is ready, the cloud side covers it (with a key). |
+| Arc, Una, Live, Cast | Training is queued. Until a brain is trained, Akira says plainly that it can't do that yet. |
 | Calculator, clock, search of your own chats | Work fully in the visitor's browser. |

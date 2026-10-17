@@ -10,11 +10,12 @@ still talking.
                      Alternate Protocol (protocol.py)             which brain? which tier? local, cloud or both?
                        router brain (trained) + rules
                          │                        │
-      LAC: Local Access Center (lac.py)     CAC: Cloud Access Center (cac.py)
-      messages, contacts, calendar,         large cloud models; can call back into
-      files, photos, settings, maths,       the LAC's tools, so personal data leaves
-      Relations & References graph          the device only when it's needed
-      + Akira's native brains (native/)
+      LAC: Local Access Center (lac.py)     CAC: Cloud Access Center
+      messages, contacts, calendar,         the Akira server's larger brains
+      files, photos, settings, maths,       (Pro, Ultra, Max) and the internet
+      Relations & References graph          (web.py: search, Wikipedia, pages)
+
+      Every brain is Akira's own model, trained from scratch in akira/native. No third-party AI.
 ```
 
 ## Brains
@@ -28,13 +29,12 @@ still talking.
 | Live | Lite → General → Max | speech to text | CTC transformer, 2.1M / 8.2M / 25.6M params, 51 h of LibriSpeech |
 | Cast | Lite → General → Max | live screen viewing + voice | screen reader: finds text lines and reads them with a CNN + LSTM (CTC), 1.1M / 2.7M / 6.2M params, trained on synthetic screen text in 80 fonts; plus Live |
 
-**Internet access:** questions about anything current (news, prices, "search for…", a link) go online. With an
-Anthropic key the cloud brains use Anthropic's web search and web fetch tools; without one, Akira searches the web
-(DuckDuckGo, with Bing as a backup) and Wikipedia itself (`akira/web.py`) and answers with links. `AKIRA_WEB=off`
-turns it off.
+**Internet access:** questions about anything current (news, prices, "search for…", a link) and factual questions
+go online. Akira searches the web (DuckDuckGo, with Bing as a backup) and Wikipedia itself (`akira/web.py`) and
+answers with links to its sources. No API keys. `AKIRA_WEB=off` turns it off.
 
-With `ANTHROPIC_API_KEY` set, the cloud side runs each tier on a large model (Haiku 5.5 / Sonnet 5.5 /
-Opus 5.5 by tier, set in `akira/brains.py`). Without it, Akira answers with its native brains and the LAC.
+**Akira uses no third-party AI and no API keys.** Every answer comes from Akira's own brains, the device tools, or
+the internet. Answer quality grows with training: bigger brains and more training (a GPU) make Akira smarter.
 
 ## Run it
 
