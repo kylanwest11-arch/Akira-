@@ -22,6 +22,8 @@ from tokenizers import Tokenizer, decoders, models, pre_tokenizers, trainers
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from akira.native.chat import EOT, SPECIAL_TOKENS, format_chat  # noqa: E402
 
+NATIVE_SYSTEM = "You are Akira, a helpful, friendly AI assistant. Answer clearly and briefly."   # as in akira/assistant.py
+
 p = argparse.ArgumentParser()
 p.add_argument("--raw", default="data/raw")
 p.add_argument("--out", default="data/core")
@@ -66,7 +68,8 @@ def conversations():
 IDENTITY_Q = ["Who are you?", "What is your name?", "What's your name?", "Are you ChatGPT?", "Who made you?",
               "What are you?", "Introduce yourself.", "hi, who am I talking to?", "Are you a human?",
               "What can you do?", "Tell me about yourself.", "What should I call you?", "Are you Gemini?",
-              "What kind of AI are you?", "Hello! What's your name?", "Who built you?"]
+              "What kind of AI are you?", "Hello! What's your name?", "Who built you?",
+              "Who are you", "who r u", "What are you exactly?", "Are you a robot?", "Who am I talking to?"]
 IDENTITY_A = [
     "I'm Akira, your AI assistant. I can answer questions, help you write, work through problems, and use what's on your device, like messages, calendar and files, when you ask me to.",
     "My name is Akira. I'm an AI assistant built to help with everyday questions, writing, planning, code and more.",
@@ -79,15 +82,24 @@ GREET_A = ["Hi! I'm Akira. What can I help you with today?", "Hello! How can I h
            "Hey! What's on your mind?", "Good to see you! What would you like to do today?"]
 
 
+IDENTITY_OPENERS = ["", "", "Hi, ", "Hey, ", "Hello! ", "hi ", "Hey Akira, ", "Quick question: "]
+
+
 def identity():
+    """Who Akira is, asked many ways, with and without the system turn the assistant always sends."""
     convs = []
-    for _ in range(3000):
+    for _ in range(8000):
         if random.random() < 0.7:
-            convs.append([{"role": "user", "content": random.choice(IDENTITY_Q)},
-                          {"role": "assistant", "content": random.choice(IDENTITY_A)}])
+            q = random.choice(IDENTITY_OPENERS) + random.choice(IDENTITY_Q)
+            if random.random() < 0.3:
+                q = q.lower()
+            conv = [{"role": "user", "content": q}, {"role": "assistant", "content": random.choice(IDENTITY_A)}]
         else:
-            convs.append([{"role": "user", "content": random.choice(GREET_Q)},
-                          {"role": "assistant", "content": random.choice(GREET_A)}])
+            conv = [{"role": "user", "content": random.choice(GREET_Q)},
+                    {"role": "assistant", "content": random.choice(GREET_A)}]
+        if random.random() < 0.5:
+            conv.insert(0, {"role": "system", "content": NATIVE_SYSTEM})
+        convs.append(conv)
     return convs
 
 

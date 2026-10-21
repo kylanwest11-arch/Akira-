@@ -13,6 +13,12 @@ always finishes on time: warm up, cosine decay, and for the last 15% of the
 time switch to --final_mix (by default, mostly conversations, so the brain
 ends in Akira's voice). Resumable: rerun the same command and it continues
 from models/<brain>.last.pt.
+
+A second round continues a finished brain at a lower learning rate under its own file name,
+so the first round stays in service until the second one is done:
+
+    python3 -m akira.native.train --brain core-pro --name core-pro-r2 --init models/core-pro.pt \
+        --minutes 180 --lr_scale 0.5
 """
 import argparse
 import json
@@ -54,15 +60,18 @@ p.add_argument("--mix", default="chat:0.65,know:0.35", help="data sources and th
 p.add_argument("--final_mix", default="chat:0.9,know:0.1", help="mix for the last 15%% of the time")
 p.add_argument("--score", default="chat:0.7,know:0.3", help="how validation losses combine to pick the best checkpoint")
 p.add_argument("--init", default=None, help="start from this checkpoint's weights (first run only)")
+p.add_argument("--name", default=None, help="file name for this run's checkpoints (default: the brain id)")
+p.add_argument("--lr_scale", type=float, default=1.0, help="multiply the brain's peak learning rate (lower for a second round)")
 p.add_argument("--eval_every", type=float, default=5, help="minutes between evaluations")
 args = p.parse_args()
 
 mix, final_mix, score_w = parse_mix(args.mix), parse_mix(args.final_mix), parse_mix(args.score)
 torch.manual_seed(0)
 os.makedirs(args.models, exist_ok=True)
-best_path = os.path.join(args.models, f"{args.brain}.pt")
-last_path = os.path.join(args.models, f"{args.brain}.last.pt")
-log_path = os.path.join(args.models, f"{args.brain}.log.json")
+name = args.name or args.brain
+best_path = os.path.join(args.models, f"{name}.pt")
+last_path = os.path.join(args.models, f"{name}.last.pt")
+log_path = os.path.join(args.models, f"{name}.log.json")
 
 tokenizer = open(os.path.join(args.data, "tokenizer.json"), encoding="utf-8").read()
 load = lambda n: np.memmap(os.path.join(args.data, n), dtype=np.uint16, mode="r")
@@ -70,6 +79,7 @@ sources = sorted(set(mix) | set(final_mix) | set(score_w))
 data = {s: (load(f"{s}.bin"), load(f"{s}_val.bin")) for s in sources}
 
 L, H, E, peak_lr = SIZES[args.brain]
+peak_lr *= args.lr_scale
 from tokenizers import Tokenizer  # noqa: E402
 cfg = Config(vocab_size=Tokenizer.from_str(tokenizer).get_vocab_size(), block_size=args.block,
              n_layer=L, n_head=H, n_embd=E, dropout=0.0)
@@ -177,4 +187,4 @@ while True:
     state["step"] += 1
     state["tokens"] += x.numel()
 
-print(f"done: {args.brain}, best score {state['best']:.3f}, saved {best_path}", flush=True)
+print(f"done: {name}, best score {state['best']:.3f}, saved {best_path}", flush=True)

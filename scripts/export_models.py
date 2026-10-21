@@ -37,7 +37,7 @@ def shrink(obj):
 
 for path in sorted(glob.glob(os.path.join(SRC, "*.pt"))):
     name = os.path.basename(path)
-    if name.endswith(".last.pt") or name.startswith("router-"):
+    if name.endswith((".last.pt", ".prev.pt", "-next.pt")) or name.startswith("router-"):
         continue
     if not opts.all and not finished(name[:-3]):
         print(f"{name}: still training, skipped (use --all to include it)")
