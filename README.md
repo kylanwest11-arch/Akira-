@@ -29,6 +29,18 @@ still talking.
 | Live | Lite → General → Max | speech to text | CTC transformer, 2.1M / 8.2M / 25.6M params, 51 h of LibriSpeech |
 | Cast | Lite → General → Max | live screen viewing + voice | screen reader: finds text lines and reads them with a CNN + LSTM (CTC), 1.1M / 2.7M / 6.2M params, trained on synthetic screen text in 80 fonts; plus Live |
 
+**Core's tiers.** All three share the same common knowledge: an offline encyclopedia built from Simple
+Wikipedia (`akira/knowledge.py`, `python3 -m akira.knowledge build`). What differs is how far each goes:
+
+| Tier | Strength | How |
+|---|---|---|
+| Standard | fast, accurate answers | the encyclopedia answers instantly and offline, only when it is sure; else one web lookup; else the Standard brain |
+| Pro | research agent, reasoning | splits the question, searches the encyclopedia, the web and your own files (LAC), reads the best pages, answers with numbered sources (`akira/research.py`) |
+| Ultra | deepest research, reasoning, mild coding | reads more pages, searches again when results are thin, marks facts two independent sources agree on (✓); its brain also learns code |
+
+Every brain is trained on step-by-step maths reasoning (GSM8K, MetaMathQA), and Akira re-checks every calculation
+a brain writes before showing it (`akira/reasoning.py`). `python3 evals/knowledge.py` scores the encyclopedia.
+
 **Internet access:** questions about anything current (news, prices, "search for…", a link) and factual questions
 go online. Akira searches the web (DuckDuckGo, with Bing as a backup) and Wikipedia itself (`akira/web.py`) and
 answers with links to its sources. It also **browses websites**: "go to bbc.com" opens the page and shows its main
@@ -86,6 +98,8 @@ after a disconnect.
 python3 scripts/download_data.py        # training data from Hugging Face (--brains core,una,... for a subset)
 python3 scripts/build_corpus.py         # Core: chat + knowledge corpus -> data/core (reuses release/tokenizer.json)
 python3 scripts/build_code_corpus.py    # Una: code corpus with the same tokenizer
+python3 scripts/build_reason_corpus.py  # Core: step-by-step maths reasoning (GSM8K + MetaMathQA)
+python3 -m akira.knowledge build        # Core's shared encyclopedia -> models/knowledge.db
 python3 scripts/prepare_live.py         # Live: LibriSpeech -> log-mel features (download parquet into data/live/raw)
 python3 scripts/prepare_arc_vision.py   # Arc's recogniser: mini-ImageNet -> 72x72 images
 # Cast renders its own training screens; it only needs the corpora in data/raw

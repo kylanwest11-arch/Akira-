@@ -26,8 +26,9 @@ import uuid
 
 import numpy as np
 
-from . import brains, protocol, web
+from . import brains, protocol, reasoning, research, web
 from .fhp import Listener
+from .knowledge import Knowledge
 from .lac import LocalAccessCenter
 from .native import arc as arc_mod
 from .native import arc_vision as vision_mod
@@ -67,6 +68,7 @@ class Akira:
         self.vision = Latest(vision_mod.load_best, "arc-vision", models_dir)
         self.cast = Latest(cast_mod.load_best, "cast", models_dir)
         self.live = Latest(live_mod.load_best, "live", models_dir)
+        self.knowledge = Knowledge(os.path.join(models_dir, "knowledge.db"))   # shared by every Core tier
         self.listeners = {}
         self._lock = threading.Lock()
 
@@ -215,6 +217,28 @@ class Akira:
                                            "I can describe the image in words instead."}
             yield {"type": "done", "engine": "device"}
             return
+        # Core's tiers: Standard answers instantly from the shared encyclopedia; Pro and Ultra research
+        web_on = os.environ.get("AKIRA_WEB", "on") != "off"
+        if brain.family == "core" and not images and research.wants_research(text):
+            if brain.rank == 0 and not route.web:
+                found, doc = self.knowledge.answer(text)
+                if found:
+                    yield {"type": "tool", "name": "encyclopedia", "input": {"query": text}, "where": "akira"}
+                    yield {"type": "text", "text": f"{found}\n\n— [{doc['title']} (Simple Wikipedia)]({doc['url']})"}
+                    yield {"type": "done", "engine": "knowledge", "sources": [doc["url"]]}
+                    return
+            elif brain.rank >= 1:
+                result = None
+                for ev in research.run(text, brain.rank, knowledge=self.knowledge, lac=self.lac,
+                                       personal=getattr(self.lac.device, "personal", False), use_web=web_on):
+                    if ev["type"] == "result":
+                        result = ev
+                    else:
+                        yield ev
+                if result:
+                    yield {"type": "text", "text": result["text"]}
+                    yield {"type": "done", "engine": f"research:{brain.id}", "sources": result["sources"]}
+                    return
         # the internet: news, prices and anything current, plus factual questions a small brain would guess at
         if (os.environ.get("AKIRA_WEB", "on") != "off" and brain.family in ("core", "una") and not images
                 and (route.web or (web.QUESTION.match(text) and brain.family == "core" and not web.PERSONAL.search(text)))):
@@ -238,8 +262,15 @@ class Akira:
             yield {"type": "done", "engine": "none"}
             return
         convo = [{"role": "system", "content": NATIVE_SYSTEM}] + history[-6:] + [{"role": "user", "content": text}]
-        for piece in engine.stream_chat(convo, max_new_tokens=220, stop=stop):
-            yield {"type": "text", "text": piece}
+        if reasoning.is_word_problem(text):
+            # show the working only once every calculation in it has been checked
+            worked = "".join(engine.stream_chat(convo, max_new_tokens=320, temperature=0.3, stop=stop))
+            fixed, n = reasoning.check(worked)
+            yield {"type": "tool", "name": "check_math", "input": {"corrections": n}, "where": "akira"}
+            yield {"type": "text", "text": fixed}
+        else:
+            for piece in engine.stream_chat(convo, max_new_tokens=220, stop=stop):
+                yield {"type": "text", "text": piece}
         yield {"type": "done", "engine": f"native:{engine.brain}"}
 
     def _native_screen_answer(self, question, screen_text, brain, history, stop):

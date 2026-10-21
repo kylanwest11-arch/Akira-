@@ -310,3 +310,45 @@ def test_browse_targets_and_following_links(monkeypatch):
     from akira.device import DeviceData
     out = text_of(Akira(device=DeviceData(), models_dir="/nonexistent").respond(hist + [{"role": "user", "content": "open 2"}]))
     assert "Riverbook News" in out and "1. [" in out
+
+
+def test_reasoning_check_fixes_arithmetic_and_carries_it():
+    from akira.reasoning import check, is_word_problem
+    fixed, n = check("She has 50 - 10 - 8 = 30 left.\nSplit 16 ways: 30 / 16 = 2.\n#### 2\nThe answer is 30.")
+    assert n == 1 and "= 32 left" in fixed and "32 / 16" in fixed and "####" not in fixed and "The answer is 32." in fixed
+    assert is_word_problem("Karen bakes 50 cookies and gives away 18. How many are left?")
+    assert not is_word_problem("What is the capital of France?")
+
+
+def test_research_plans_and_picks_sentences():
+    from akira import research
+    assert research.plan("Compare solar power and wind power") == ["solar power", "wind power"]
+    assert research.plan("solar vs wind") == ["solar", "wind"]
+    page = ("Skip to content. Wind power is the use of wind to make electricity with turbines on farms. "
+            "Our newsletter is great, subscribe now to get updates every week from us. "
+            "Wind power is variable, because the wind does not always blow at the same speed.")
+    got = [s for _, s in research.best_sentences(page, "wind power", question="why is wind power variable")]
+    assert got and all("subscribe" not in s for s in got)
+    assert research.wants_research("Why do cats purr?") and not research.wants_research("who are you?")
+
+
+def test_who_wrote_is_not_about_messages():
+    assert protocol.route(protocol.Request(text="Who wrote Hamlet?")).local_intents == []
+    assert "messages" in protocol.route(protocol.Request(text="what did Maya write to me?")).local_intents
+
+
+def test_knowledge_answers_from_a_tiny_encyclopedia(tmp_path):
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    from akira import knowledge
+    src = tmp_path / "wiki.parquet"
+    pq.write_table(pa.table({"title": ["Japan", "Tokyo", "Spider"], "text": [
+        "Japan is an island country in East Asia. Tokyo is the capital of Japan and its biggest city.",
+        "Tokyo is the capital city of Japan, on the island of Honshu.",
+        "Spiders are small animals. They have eight legs, and most spiders make silk."]}), src)
+    db = str(tmp_path / "k.db")
+    assert knowledge.build(str(src), db) == 3
+    k = knowledge.Knowledge(db)
+    assert "Tokyo" in k.answer("What is the capital of Japan?")[0]
+    assert "eight legs" in k.answer("How many legs does a spider have?")[0]
+    assert k.answer("Who painted the Mona Lisa?") == (None, None)

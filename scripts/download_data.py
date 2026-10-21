@@ -18,6 +18,9 @@ FILES = {
         ("data/raw/everyday.parquet", f"{HF}/HuggingFaceTB/everyday-conversations-llama3.1-2k/parquet/default/train_sft/0.parquet"),
         ("data/raw/dolly.parquet", f"{HF}/databricks/databricks-dolly-15k/parquet/default/train/0.parquet"),
         ("data/raw/simplewiki.parquet", f"{HF}/wikimedia/wikipedia/parquet/20231101.simple/train/0.parquet"),
+        ("data/raw/gsm8k_train.parquet", f"{HF}/openai/gsm8k/parquet/main/train/0.parquet"),
+        ("data/raw/gsm8k_test.parquet", f"{HF}/openai/gsm8k/parquet/main/test/0.parquet"),
+        ("data/raw/metamath.parquet", f"{HF}/meta-math/MetaMathQA/parquet/default/train/0.parquet"),
         ("data/raw/py18k.parquet", f"{HF}/iamtarun/python_code_instructions_18k_alpaca/parquet/default/train/0.parquet"),
         # the first 200 MB of TinyStories is plenty for fluency
         ("data/raw/tinystories_train.txt", "https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStoriesV2-GPT4-train.txt", "0-209715199"),

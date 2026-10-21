@@ -34,7 +34,9 @@ REASONING = re.compile(r"\b(prove|analy[sz]e|analysis|strategy|compare|trade-?of
                        r"evaluate|critique|derive|business plan|essay|report)\b", re.I)
 
 LOCAL = {
-    "messages": re.compile(r"\b(message|messages|text(ed)?|sms|sent me|said|wrote|chat with)\b", re.I),
+    # "said"/"wrote" only about the user's own conversations: "what did Maya say", not "who wrote Hamlet"
+    "messages": re.compile(r"\b(message|messages|text(ed)?|sms|sent me|chat with)\b|"
+                           r"\b(said|wrote|say|write)\b.*\b(me|my|to me|us)\b|\bdid \w+ (say|write)\b", re.I),
     "contacts": re.compile(r"\b(contact|phone number|number for|call|email address)\b", re.I),
     "calendar": re.compile(r"\b(calendar|meeting|schedule|appointment|event|dinner|lunch|what('s| is) on|free on|busy)\b", re.I),
     "files": re.compile(r"\b(file|files|document|documents|doc|docs|spreadsheet|pdf|notes|folder|spec)\b", re.I),
