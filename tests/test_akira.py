@@ -369,3 +369,28 @@ def test_creative_corpus_cleans_writingprompts():
     exec(open(path).read().split("def stories")[0], ns)      # just the helpers, not the build
     assert ns["detok"]("You 've found it , and says , ``hi''") == 'You\'ve found it, and says, "hi"'
     assert ns["BLOCK"].search("some nsfw stuff") and not ns["BLOCK"].search("a dragon named Daisy")
+
+
+def test_distillation_runs(tmp_path):
+    import subprocess
+    import numpy as np
+    import torch
+    from tokenizers import Tokenizer
+    from akira.native.model import GPT, Config
+    data = tmp_path / "data"
+    data.mkdir()
+    tok = open(os.path.join(os.path.dirname(__file__), "..", "release", "tokenizer.json")).read()
+    (data / "tokenizer.json").write_text(tok)
+    rng = np.random.default_rng(0)
+    for name in ("chat", "know"):
+        for split in ("", "_val"):
+            rng.integers(0, 8000, 5000).astype(np.uint16).tofile(data / f"{name}{split}.bin")
+    vocab = Tokenizer.from_str(tok).get_vocab_size()
+    cfg = Config(vocab_size=vocab, block_size=64, n_layer=1, n_head=2, n_embd=32, dropout=0.0)
+    torch.save({"model": GPT(cfg).state_dict(), "config": cfg.__dict__}, tmp_path / "teacher.pt")
+    out = subprocess.run([sys.executable, "-m", "akira.native.train", "--brain", "core-standard", "--data", str(data),
+                          "--models", str(tmp_path), "--minutes", "0.05", "--block", "64", "--batch", "2",
+                          "--teacher", str(tmp_path / "teacher.pt")],
+                         capture_output=True, text=True, cwd=os.path.join(os.path.dirname(__file__), ".."))
+    assert out.returncode == 0, out.stdout + out.stderr
+    assert "learns from" in out.stdout and (tmp_path / "core-standard.pt").exists()

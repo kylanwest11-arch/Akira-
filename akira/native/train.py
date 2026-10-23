@@ -14,6 +14,13 @@ time switch to --final_mix (by default, mostly conversations, so the brain
 ends in Akira's voice). Resumable: rerun the same command and it continues
 from models/<brain>.last.pt.
 
+Distillation: with --teacher, a smaller brain also learns from a bigger brain's predictions (every
+next-token probability, not just the one word in the text), so Pro and Standard pick up what Ultra
+knows. The loss is (1 - d) * text loss + d * KL(teacher || student) at temperature --distill_temp:
+
+    python3 -m akira.native.train --brain core-pro --name core-pro-next --init models/core-pro.pt \
+        --teacher models/core-ultra.pt --minutes 300 --lr_scale 0.5
+
 A second round continues a finished brain at a lower learning rate under its own file name,
 so the first round stays in service until the second one is done:
 
@@ -28,6 +35,7 @@ import time
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 
 from .accel import DEVICE, autocast, describe
 from .model import GPT, Config
@@ -62,6 +70,9 @@ p.add_argument("--score", default="chat:0.7,know:0.3", help="how validation loss
 p.add_argument("--init", default=None, help="start from this checkpoint's weights (first run only)")
 p.add_argument("--name", default=None, help="file name for this run's checkpoints (default: the brain id)")
 p.add_argument("--lr_scale", type=float, default=1.0, help="multiply the brain's peak learning rate (lower for a second round)")
+p.add_argument("--teacher", default=None, help="learn from this bigger brain's predictions too (distillation)")
+p.add_argument("--distill", type=float, default=0.5, help="share of the loss that comes from the teacher")
+p.add_argument("--distill_temp", type=float, default=2.0, help="softens both brains' predictions before comparing")
 p.add_argument("--eval_every", type=float, default=5, help="minutes between evaluations")
 args = p.parse_args()
 
@@ -103,6 +114,17 @@ elif args.init:
     model.load_state_dict(ck["model"])
     state["init"] = args.init
     print(f"{args.brain} starts from {args.init}", flush=True)
+teacher = None
+if args.teacher:
+    tck = torch.load(args.teacher, map_location="cpu", weights_only=False)
+    if tck["config"]["vocab_size"] != cfg.vocab_size:
+        raise SystemExit(f"{args.teacher} uses a different tokenizer than {args.brain}")
+    teacher = GPT(Config(**tck["config"])).to(DEVICE)
+    teacher.load_state_dict({k: v.float() for k, v in tck["model"].items()})
+    teacher.eval().requires_grad_(False)
+    del tck
+    print(f"{name} learns from {args.teacher} ({teacher.num_params() / 1e6:.1f}M parameters), "
+          f"distill {args.distill:g} at temperature {args.distill_temp:g}", flush=True)
 print(f"{args.brain}: {model.num_params() / 1e6:.1f}M parameters, {args.minutes:g} min budget, mix {mix}, {describe()}", flush=True)
 
 total = args.minutes * 60
@@ -179,7 +201,15 @@ while True:
         g["lr"] = lr_at(progress)
     x, y = batch(pick_source(mix if progress < 0.85 else final_mix), "train")
     with autocast():
-        _, loss = model(x, y)
+        logits, loss = model(x, y)
+    if teacher is not None:
+        with torch.no_grad(), autocast():
+            t_logits, _ = teacher(x)
+        T = args.distill_temp
+        kl = F.kl_div(F.log_softmax(logits.float().view(-1, logits.size(-1)) / T, -1),
+                      F.log_softmax(t_logits.float().view(-1, t_logits.size(-1)) / T, -1),
+                      log_target=True, reduction="batchmean") * T * T
+        loss = (1 - args.distill) * loss + args.distill * kl
     opt.zero_grad(set_to_none=True)
     loss.backward()
     torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
