@@ -36,7 +36,7 @@ REASONING = re.compile(r"\b(prove|analy[sz]e|analysis|strategy|compare|trade-?of
 LOCAL = {
     # "said"/"wrote" only about the user's own conversations: "what did Maya say", not "who wrote Hamlet"
     "messages": re.compile(r"\b(message|messages|text(ed)?|sms|sent me|chat with)\b|"
-                           r"\b(said|wrote|say|write)\b.*\b(me|my|to me|us)\b|\bdid \w+ (say|write)\b", re.I),
+                           r"\b(said|wrote|say|write)\b.*\b(to me|to us|me back)\b|\bdid \w+ (say|write)\b", re.I),
     "contacts": re.compile(r"\b(contact|phone number|number for|call|email address)\b", re.I),
     "calendar": re.compile(r"\b(calendar|meeting|schedule|appointment|event|dinner|lunch|what('s| is) on|free on|busy)\b", re.I),
     "files": re.compile(r"\b(file|files|document|documents|doc|docs|spreadsheet|pdf|notes|folder|spec)\b", re.I),
@@ -123,9 +123,27 @@ ROUTER_FAMILY_CONFIDENCE = 0.8
 ROUTER_RANK_CONFIDENCE = 0.6
 
 
+# asking Akira to make something up: a story, poem, song or ideas (Core writes it, nothing to look up)
+CREATIVE = re.compile(r"\b(write|compose|make up|create|come up with|tell|give|invent|dream up)\b.{0,40}\b("
+                      r"story|stories|poem|poems|poetry|song|lyrics|haiku|limerick|sonnet|rap|verse|fairy ?tale|fable|"
+                      r"tale|play|script for an? (\w+ )?(play|movie|film|scene|skit)|screenplay|skit|monologue|joke|riddle|"
+                      r"bedtime story|ideas?|names?|slogans?|taglines?|plot)\b|\bbrainstorm\b|\bonce upon a time\b",
+                      re.I)
+
+
+def is_creative(text):
+    plain = re.sub(r"(?i)\bscripts? for an? (\w+ )?(play|movie|film|scene|skit)\b", "", text)   # a play's script isn't code
+    return bool(CREATIVE.search(text)) and not CODE.search(plain)
+
+
 def route(req: Request) -> Route:
     reasons = []
     learned = None
+    if is_creative(req.text) and not req.images and req.family == "auto" and req.modality == "text":
+        rank = pick_rank(req, "core", reasons) if req.tier == "auto" else None
+        brain = brains.get("core", req.tier if req.tier != "auto" else brains.tier_for_rank("core", rank))
+        reasons.append("creative writing -> Core writes it")
+        return Route(brain, "cloud" if req.cloud_available else "local", [], reasons, False)
     if req.router is not None and req.text.strip() and req.modality == "text":
         learned = req.router.predict(req.text)
 

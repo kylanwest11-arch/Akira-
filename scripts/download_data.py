@@ -21,6 +21,10 @@ FILES = {
         ("data/raw/gsm8k_train.parquet", f"{HF}/openai/gsm8k/parquet/main/train/0.parquet"),
         ("data/raw/gsm8k_test.parquet", f"{HF}/openai/gsm8k/parquet/main/test/0.parquet"),
         ("data/raw/metamath.parquet", f"{HF}/meta-math/MetaMathQA/parquet/default/train/0.parquet"),
+        ("data/raw/writingprompts_0.parquet", f"{HF}/euclaise/writingprompts/parquet/default/train/0.parquet"),
+        ("data/raw/writingprompts_val.parquet", f"{HF}/euclaise/writingprompts/parquet/default/validation/0.parquet"),
+        ("data/raw/poetry.parquet", f"{HF}/merve/poetry/parquet/default/train/0.parquet"),
+        ("data/raw/gutenberg_poetry.parquet", f"{HF}/biglam/gutenberg-poetry-corpus/parquet/default/train/0.parquet"),
         ("data/raw/py18k.parquet", f"{HF}/iamtarun/python_code_instructions_18k_alpaca/parquet/default/train/0.parquet"),
         # the first 200 MB of TinyStories is plenty for fluency
         ("data/raw/tinystories_train.txt", "https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStoriesV2-GPT4-train.txt", "0-209715199"),

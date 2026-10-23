@@ -38,6 +38,7 @@ from .native.engine import NativeBrains
 from .native.router import Router
 
 NATIVE_SYSTEM = "You are Akira, a helpful, friendly AI assistant. Answer clearly and briefly."
+CREATIVE_SYSTEM = "You are Akira, a creative writer. Write something original, vivid and complete."
 
 
 class Latest:
@@ -217,6 +218,17 @@ class Akira:
                                            "I can describe the image in words instead."}
             yield {"type": "done", "engine": "device"}
             return
+        # creativity: stories, poems, songs and ideas are written freely, not looked up
+        if brain.family == "core" and not images and protocol.is_creative(text):
+            engine = self.native.best_for("core", brain.rank)
+            if engine is not None:
+                convo = [{"role": "system", "content": CREATIVE_SYSTEM}] + history[-6:] + [{"role": "user", "content": text}]
+                yield {"type": "tool", "name": "create", "input": {"style": "creative"}, "where": "akira"}
+                for piece in engine.stream_chat(convo, max_new_tokens=400, temperature=0.9, top_p=0.95, top_k=60,
+                                                repetition_penalty=1.2, stop=stop):
+                    yield {"type": "text", "text": piece}
+                yield {"type": "done", "engine": f"native:{engine.brain}"}
+                return
         # Core's tiers: Standard answers instantly from the shared encyclopedia; Pro and Ultra research
         web_on = os.environ.get("AKIRA_WEB", "on") != "off"
         if brain.family == "core" and not images and research.wants_research(text):

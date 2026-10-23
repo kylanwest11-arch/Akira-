@@ -352,3 +352,20 @@ def test_knowledge_answers_from_a_tiny_encyclopedia(tmp_path):
     assert "Tokyo" in k.answer("What is the capital of Japan?")[0]
     assert "eight legs" in k.answer("How many legs does a spider have?")[0]
     assert k.answer("Who painted the Mona Lisa?") == (None, None)
+
+
+def test_creative_requests_go_to_core():
+    for t in ["Write a poem about rain", "Write me a short story about a robot who learns to paint",
+              "write a script for a short play", "brainstorm names for my bakery"]:
+        r = protocol.route(protocol.Request(text=t))
+        assert r.brain.family == "core" and r.local_intents == [] and not r.web, t
+    assert protocol.route(protocol.Request(text="write a bash script to back up files")).brain.family == "una"
+    assert protocol.route(protocol.Request(text="draw a horse")).brain.family == "arc"
+
+
+def test_creative_corpus_cleans_writingprompts():
+    path = os.path.join(os.path.dirname(__file__), "..", "scripts", "build_creative_corpus.py")
+    ns = {"__file__": path}
+    exec(open(path).read().split("def stories")[0], ns)      # just the helpers, not the build
+    assert ns["detok"]("You 've found it , and says , ``hi''") == 'You\'ve found it, and says, "hi"'
+    assert ns["BLOCK"].search("some nsfw stuff") and not ns["BLOCK"].search("a dragon named Daisy")

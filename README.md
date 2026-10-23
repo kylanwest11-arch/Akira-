@@ -38,6 +38,10 @@ Wikipedia (`akira/knowledge.py`, `python3 -m akira.knowledge build`). What diffe
 | Pro | research agent, reasoning | splits the question, searches the encyclopedia, the web and your own files (LAC), reads the best pages, answers with numbered sources (`akira/research.py`) |
 | Ultra | deepest research, reasoning, mild coding | reads more pages, searches again when results are thin, marks facts two independent sources agree on (✓); its brain also learns code |
 
+**Creativity.** Stories, poems, songs, jokes and ideas go to Core's creative mode: nothing is looked up, and the
+brain writes freely (warmer sampling, longer pieces). Core trains on human-written stories (r/WritingPrompts) and
+poetry (classic poems and Project Gutenberg verse) for this (`scripts/build_creative_corpus.py`).
+
 Every brain is trained on step-by-step maths reasoning (GSM8K, MetaMathQA), and Akira re-checks every calculation
 a brain writes before showing it (`akira/reasoning.py`). `python3 evals/knowledge.py` scores the encyclopedia.
 
@@ -99,6 +103,7 @@ python3 scripts/download_data.py        # training data from Hugging Face (--bra
 python3 scripts/build_corpus.py         # Core: chat + knowledge corpus -> data/core (reuses release/tokenizer.json)
 python3 scripts/build_code_corpus.py    # Una: code corpus with the same tokenizer
 python3 scripts/build_reason_corpus.py  # Core: step-by-step maths reasoning (GSM8K + MetaMathQA)
+python3 scripts/build_creative_corpus.py # Core: human-written stories and poems
 python3 -m akira.knowledge build        # Core's shared encyclopedia -> models/knowledge.db
 python3 scripts/prepare_live.py         # Live: LibriSpeech -> log-mel features (download parquet into data/live/raw)
 python3 scripts/prepare_arc_vision.py   # Arc's recogniser: mini-ImageNet -> 72x72 images
