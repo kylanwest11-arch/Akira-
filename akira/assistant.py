@@ -38,6 +38,10 @@ from .native.engine import NativeBrains
 from .native.router import Router
 
 NATIVE_SYSTEM = "You are Akira, a helpful, friendly AI assistant. Answer clearly and briefly."
+SELF_INTRO = re.compile(r"(I'm|I am|My name is|You're talking to) Akira\b", re.I)
+IDENTITY_Q = re.compile(r"\b(who|what) (are|r) (you|u)\b|\byour name\b|\bwho (made|built|created) you\b|"
+                        r"\bintroduce yourself\b|\babout yourself\b|\bare you (a |an )?(human|robot|ai|chatgpt|gemini)\b|"
+                        r"\bwhat can you do\b|^\s*(hi|hello|hey)\b", re.I)
 CREATIVE_SYSTEM = "You are Akira, a creative writer. Write something original, vivid and complete."
 
 
@@ -280,9 +284,17 @@ class Akira:
             fixed, n = reasoning.check(worked)
             yield {"type": "tool", "name": "check_math", "input": {"corrections": n}, "where": "akira"}
             yield {"type": "text", "text": fixed}
-        else:
+        elif IDENTITY_Q.search(text):
             for piece in engine.stream_chat(convo, max_new_tokens=220, stop=stop):
                 yield {"type": "text", "text": piece}
+        else:
+            # a small brain that isn't sure sometimes falls back on introducing itself; ask it again
+            answer = ""
+            for attempt in range(3):
+                answer = "".join(engine.stream_chat(convo, max_new_tokens=220, temperature=0.7 + 0.15 * attempt, stop=stop))
+                if not SELF_INTRO.match(answer.strip()):
+                    break
+            yield {"type": "text", "text": answer}
         yield {"type": "done", "engine": f"native:{engine.brain}"}
 
     def _native_screen_answer(self, question, screen_text, brain, history, stop):
