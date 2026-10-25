@@ -394,3 +394,10 @@ def test_distillation_runs(tmp_path):
                          capture_output=True, text=True, cwd=os.path.join(os.path.dirname(__file__), ".."))
     assert out.returncode == 0, out.stdout + out.stderr
     assert "learns from" in out.stdout and (tmp_path / "core-standard.pt").exists()
+
+
+def test_router_never_takes_drawing_away_from_arc():
+    from akira.native.router import Router
+    r = Router.load_default(os.path.join(os.path.dirname(__file__), "..", "release"))
+    for t in ["draw a horse", "paint a sailboat at sunset", "sketch a cat"]:
+        assert protocol.route(protocol.Request(text=t, router=r)).brain.family == "arc", t

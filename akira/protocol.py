@@ -148,7 +148,9 @@ def route(req: Request) -> Route:
         learned = req.router.predict(req.text)
 
     if (learned and req.family == "auto" and learned["family_confidence"] >= ROUTER_FAMILY_CONFIDENCE
-            and not (req.images and learned["family"] == "core" and ARC_LOOK.search(req.text))):
+            and not (req.images and learned["family"] == "core" and ARC_LOOK.search(req.text))
+            and not (learned["family"] != "arc" and ARC_MAKE.search(req.text) and not CODE.search(req.text))):
+        # (a clear "draw ..." request always goes to Arc, whatever the router guesses)
         family = learned["family"]
         reasons.append(f"router brain: {family} ({learned['family_confidence']:.0%} sure)")
     else:
