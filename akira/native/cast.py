@@ -298,8 +298,14 @@ class Cast:
 
 
 def load_best(models_dir="models"):
+    """The tier that reads screens most accurately (lowest character error), so a bigger tier
+    still in training never replaces a better finished one."""
+    best, best_cer = None, float("inf")
     for name in ("cast-max", "cast-general", "cast-lite"):
         path = os.path.join(models_dir, f"{name}.pt")
-        if os.path.exists(path):
-            return Cast(path)
-    return None
+        if not os.path.exists(path):
+            continue
+        cer = torch.load(path, map_location="cpu", weights_only=False).get("state", {}).get("best", 1.0)
+        if cer < best_cer:
+            best, best_cer = path, cer
+    return Cast(best) if best else None

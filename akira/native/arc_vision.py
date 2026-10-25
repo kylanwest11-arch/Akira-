@@ -81,8 +81,13 @@ class ArcVision:
 
 
 def load_best(models_dir="models"):
+    """The tier that recognises photos most accurately (a bigger tier isn't always better)."""
+    best, best_acc = None, -1.0
     for name in ("arc-vision-max", "arc-vision-general", "arc-vision-lite"):
         path = os.path.join(models_dir, f"{name}.pt")
-        if os.path.exists(path):
-            return ArcVision(path)
-    return None
+        if not os.path.exists(path):
+            continue
+        acc = torch.load(path, map_location="cpu", weights_only=False).get("state", {}).get("best", 0.0)
+        if acc > best_acc:
+            best, best_acc = path, acc
+    return ArcVision(best) if best else None
