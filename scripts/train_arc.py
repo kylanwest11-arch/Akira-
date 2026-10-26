@@ -102,6 +102,8 @@ while True:
         avg = sum(losses) / len(losses)
         losses = []
         state["history"].append({"step": state["step"], "minutes": round(elapsed / 60, 1), "loss": round(avg, 4)})
+        recent = [h["loss"] for h in state["history"][-5:]]
+        state["loss"] = round(sum(recent) / len(recent), 4)        # recent average: how well it draws
         print(f"step {state['step']:6d} | loss {avg:.4f} | {state['images'] / 1e6:.2f}M images | {elapsed / 60:.1f}/{args.minutes:g} min", flush=True)
     if elapsed >= next_save:
         state["seconds"] = elapsed

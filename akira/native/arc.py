@@ -196,11 +196,21 @@ class Arc:
 
 
 def load_best(models_dir="models"):
-    for name in ("arc-max", "arc-general", "arc-lite"):
+    """The smallest tier that draws about as well as the best one (within 2% of the best loss):
+    a bigger tier that draws no better only makes drawing slower."""
+    found = []
+    for name in ("arc-lite", "arc-general", "arc-max"):
         path = os.path.join(models_dir, f"{name}.pt")
         if os.path.exists(path):
-            return Arc(path)
-    return None
+            state = torch.load(path, map_location="cpu", weights_only=False).get("state", {})
+            found.append((path, state.get("loss")))
+    if not found:
+        return None
+    scored = [loss for _, loss in found if loss is not None]
+    if not scored:
+        return Arc(found[-1][0])                  # no scores recorded: the biggest
+    best = min(scored)
+    return Arc(next(path for path, loss in found if loss is not None and loss <= best * 1.02))
 
 
 def load_cifar(path):
