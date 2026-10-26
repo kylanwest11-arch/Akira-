@@ -108,6 +108,36 @@ class LiveNet(nn.Module):
         return F.log_softmax(self.out(h).float(), dim=-1), out_len
 
 
+class LiveRNN(nn.Module):
+    """Same front end as LiveNet, then bidirectional GRUs: recurrent layers learn CTC alignments
+    much faster than a transformer when trained from scratch on a few hundred hours of speech."""
+
+    def __init__(self, d=256, layers=3, heads=None):
+        super().__init__()
+        self.sub = nn.Sequential(
+            nn.Conv2d(1, 32, 3, stride=2, padding=1), nn.GELU(),
+            nn.Conv2d(32, 32, 3, stride=2, padding=1), nn.GELU())
+        self.proj = nn.Linear(32 * ((N_MELS + 3) // 4), d)
+        self.rnn = nn.GRU(d, d, num_layers=layers, batch_first=True, bidirectional=True, dropout=0.1)
+        self.norm = nn.LayerNorm(2 * d)
+        self.out = nn.Linear(2 * d, len(VOCAB))
+
+    out_lengths = staticmethod(LiveNet.out_lengths)
+
+    def forward(self, feats, lengths):
+        h = self.sub(feats.unsqueeze(1))
+        B, C, T, M = h.shape
+        h = self.proj(h.permute(0, 2, 1, 3).reshape(B, T, C * M))
+        out_len = self.out_lengths(lengths)
+        packed = nn.utils.rnn.pack_padded_sequence(h, out_len.cpu().clamp(max=T), batch_first=True, enforce_sorted=False)
+        h, _ = self.rnn(packed)
+        h, _ = nn.utils.rnn.pad_packed_sequence(h, batch_first=True, total_length=T)
+        return F.log_softmax(self.out(self.norm(h)).float(), dim=-1), out_len
+
+
+ARCH = {"transformer": LiveNet, "rnn": LiveRNN}
+
+
 def greedy_decode(logp, length):
     ids = logp[:length].argmax(-1).tolist()
     out, prev = [], None
@@ -122,8 +152,9 @@ class Live:
     def __init__(self, path):
         ck = torch.load(path, map_location="cpu", weights_only=False)
         d, layers, heads = SIZES[ck["brain"]]
+        d, layers = ck.get("width", d), ck.get("layers", layers)
         self.brain = ck["brain"]
-        self.net = LiveNet(d, layers, heads)
+        self.net = ARCH[ck.get("arch", "transformer")](d, layers, heads)
         self.net.load_state_dict(ck["model"])
         self.net.eval()
         self.info = {"brain": self.brain, "parameters": sum(p.numel() for p in self.net.parameters()),

@@ -19,16 +19,22 @@ import torch.nn.functional as F
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from akira.native.accel import DEVICE, autocast, describe  # noqa: E402
-from akira.native.live import N_MELS, SIZES, LiveNet, encode_text, greedy_decode, word_error_rate  # noqa: E402
+from akira.native.live import ARCH, N_MELS, SIZES, encode_text, greedy_decode, word_error_rate  # noqa: E402
 
 p = argparse.ArgumentParser()
 p.add_argument("--brain", default="live-lite", choices=list(SIZES))
 p.add_argument("--minutes", type=float, required=True)
-p.add_argument("--frames_per_batch", type=int, default=24000, help="about 4 minutes of audio per step")
-p.add_argument("--lr", type=float, default=1e-3)
+p.add_argument("--frames_per_batch", type=int, default=12000, help="about 2 minutes of audio per step")
+p.add_argument("--lr", type=float, default=1.5e-3)
+p.add_argument("--warmup", type=int, default=300, help="steps of learning-rate warm-up")
+p.add_argument("--augment_after", type=float, default=0.2,
+               help="share of the run before SpecAugment starts: first learn which sounds are which letters")
 p.add_argument("--save_every", type=float, default=20)
 p.add_argument("--dir", default="data/live")
 p.add_argument("--models", default="models")
+p.add_argument("--arch", default="transformer", choices=list(ARCH))
+p.add_argument("--width", type=int, default=None, help="override the brain's width")
+p.add_argument("--layers", type=int, default=None, help="override the brain's layer count")
 args = p.parse_args()
 
 
@@ -45,7 +51,9 @@ val_idx = random.sample(val_idx, 200)
 print(f"{len(train_idx):,} training utterances ({sum(i['frames'] for i in train_idx) / 360000:.1f} h)", flush=True)
 
 d, layers, heads = SIZES[args.brain]
-net = LiveNet(d, layers, heads).to(DEVICE)
+d, layers = args.width or d, args.layers or layers
+net = ARCH[args.arch](d, layers, heads).to(DEVICE)
+shape = {"arch": args.arch, "width": d, "layers": layers}
 opt = torch.optim.AdamW(net.parameters(), lr=args.lr, betas=(0.9, 0.98), weight_decay=0.01)
 state = {"step": 0, "seconds": 0.0, "seconds_of_audio": 0.0, "history": [], "wer": None, "best_wer": 9.9}
 last = os.path.join(args.models, f"{args.brain}.last.pt")
@@ -112,7 +120,7 @@ def evaluate():
 
 
 def save():
-    body = {"brain": args.brain, "model": net.state_dict(), "state": state}
+    body = {"brain": args.brain, "model": net.state_dict(), "state": state, **shape}
     torch.save({**body, "optimizer": opt.state_dict()}, last + ".tmp")
     os.replace(last + ".tmp", last)
 
@@ -133,17 +141,17 @@ while True:
         save()
         if wer < state["best_wer"]:
             state["best_wer"] = wer
-            torch.save({"brain": args.brain, "model": net.state_dict(), "state": state}, best)
+            torch.save({"brain": args.brain, "model": net.state_dict(), "state": state, **shape}, best)
         json.dump(state["history"], open(os.path.join(args.models, f"{args.brain}.log.json"), "w"))
         next_save = elapsed + args.save_every * 60
         if done:
             break
     progress = elapsed / total
-    lr = args.lr * min(1.0, (state["step"] + 1) / 1000) * (0.05 + 0.95 * 0.5 * (1 + np.cos(np.pi * progress)))
+    lr = args.lr * min(1.0, (state["step"] + 1) / args.warmup) * (0.05 + 0.95 * 0.5 * (1 + np.cos(np.pi * progress)))
     for g in opt.param_groups:
         g["lr"] = lr
     items = sample_batch()
-    x, lengths, ys = make_batch(items, train_feats, True)
+    x, lengths, ys = make_batch(items, train_feats, progress >= args.augment_after)
     with autocast():
         logp, n = net(x, lengths)
     targets = torch.cat(ys)
