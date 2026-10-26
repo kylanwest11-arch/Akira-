@@ -401,3 +401,36 @@ def test_router_never_takes_drawing_away_from_arc():
     r = Router.load_default(os.path.join(os.path.dirname(__file__), "..", "release"))
     for t in ["draw a horse", "paint a sailboat at sunset", "sketch a cat"]:
         assert protocol.route(protocol.Request(text=t, router=r)).brain.family == "arc", t
+
+
+def _screen_png(rows):
+    import io
+    from PIL import Image, ImageDraw, ImageFont
+    from akira.native.cast import system_fonts
+    font = ImageFont.truetype(next(f for f in system_fonts() if "DejaVuSans.ttf" in f or "Inter" in f), 18)
+    im = Image.new("RGB", (640, 60 + 60 * len(rows)), (250, 250, 250))
+    d = ImageDraw.Draw(im)
+    for i, row in enumerate(rows):
+        d.text((24, 30 + i * 60), row, font=font, fill=(20, 20, 20))
+    buf = io.BytesIO()
+    im.save(buf, format="PNG")
+    import base64
+    return {"data": base64.b64encode(buf.getvalue()).decode(), "media_type": "image/png"}
+
+
+def test_cast_can_go_online_while_sharing_the_screen(monkeypatch):
+    from akira import web
+    opened = []
+    monkeypatch.setattr(web, "browse", lambda target: (opened.append(target) or ("**Example**", ["https://example.com"])))
+    a = Akira(models_dir=os.path.join(os.path.dirname(__file__), "..", "release"))
+    a.cast.get = lambda: type("C", (), {"read": lambda self, png: [{"text": "https://example.com/news", "box": [0, 0, 1, 1]},
+                                                                   {"text": "Today's headlines", "box": [0, 2, 1, 3]}]})()
+    screen = _screen_png(["https://example.com/news"])
+    events = list(a.respond([{"role": "user", "content": "open this page"}], images=[screen], modality="screen"))
+    assert opened and "example.com" in str(opened[0]) and any(e["type"] == "text" and "Example" in e["text"] for e in events)
+    opened.clear()
+    list(a.respond([{"role": "user", "content": "go to bbc.com"}], images=[screen], modality="screen"))
+    assert opened and "bbc.com" in str(opened[0])
+    opened.clear()
+    list(a.respond([{"role": "user", "content": "what does this error mean?"}], images=[screen], modality="screen"))
+    assert not opened                      # about the screen: Cast answers, nothing is opened

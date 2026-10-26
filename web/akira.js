@@ -172,6 +172,7 @@
   if (ds.launcher === "false") launch.hidden = true;
 
   var history = [], busy = null, pendingImages = [], screenStream = null, voiceMode = false, liveNative = false;
+  var talking = false, quietTurns = 0;   // conversation mode: listen again after each spoken answer
 
   function open() { panel.hidden = false; launch.setAttribute("aria-expanded", "true"); input.focus(); }
   function close() { panel.hidden = true; launch.setAttribute("aria-expanded", "false"); }
@@ -240,7 +241,7 @@
     var a = bubble("a", "<span class='think'>Thinking…</span>");
     var meta = document.createElement("div"); meta.className = "meta";
     var gallery = document.createElement("div"); gallery.className = "gallery";
-    var answer = "", tools = [];
+    var answer = "", tools = [], spoken = talking || voiceMode || mode === "audio";
     $(".send").innerHTML = ICON.stop; $(".send").setAttribute("aria-label", "Stop");
     busy = chat({
       messages: history.slice(-20), images: images.filter(Boolean), modality: mode, session: session,
@@ -251,7 +252,7 @@
           im.src = "data:" + ev.media_type + ";base64," + ev.data; im.alt = "Image drawn by Akira";
           gallery.appendChild(im); a.appendChild(gallery); a.appendChild(meta);
         }
-        else if (ev.type === "tool") { tools.push(ev.name); }
+        else if (ev.type === "tool") { tools.push(ev.name); if (spoken) narrate(ev); }
         else if (ev.type === "understood" && !answer) { a.innerHTML = "<span class='think'>" + esc(ev.notes.map(function (n) { return n.note; }).join(" · ")) + "…</span>"; }
         else if (ev.type === "done") {
           meta.innerHTML = [where(ev.engine)].concat(tools.length ? ["used " + tools.filter(function (t, i) { return tools.indexOf(t) === i; }).join(", ").replace(/_/g, " ")] : [])
@@ -267,7 +268,7 @@
       busy = null;
       $(".send").innerHTML = ICON.send; $(".send").setAttribute("aria-label", "Send");
       if (answer) history.push({ role: "assistant", content: answer });
-      if (mode === "audio" || (mode === "screen" && voiceMode)) speak(answer);
+      if (spoken) speak(answer, function () { if (talking) listenTurn(); });
       session = Math.random().toString(36).slice(2) + Date.now().toString(36);
     });
   }
@@ -320,7 +321,7 @@
         $(".mic").classList.remove("on"); recording = null;
         if (send_ && chunks.length) transcribe(chunks).then(function (r) {
           var text = (r && r.text) || input.value;
-          if (text.trim()) send(text, screenStream ? "screen" : "audio");
+          if (text.trim()) { quietTurns = 0; send(text, screenStream ? "screen" : "audio"); } else heardNothing();
         });
       } };
       proc.onaudioprocess = function (e) {
@@ -340,13 +341,32 @@
     }).catch(function () { bubble("a", "<span class='think'>Microphone access was blocked, so Live can't hear you.</span>"); });
   }
 
+  // Conversation mode: tap the mic once and talk; Akira answers out loud, says what it is doing
+  // ("Opening bbc.com…") and listens again. Tap while it speaks to interrupt; tap again to stop.
+  function endConversation() {
+    talking = false; quietTurns = 0; $(".mic").classList.remove("on");
+    window.speechSynthesis && speechSynthesis.cancel();
+    if (rec) { rec.onend = null; rec.stop(); rec = null; }
+    if (recording) recording.stop(false);
+    voiceMode = false;
+  }
   $(".mic").onclick = function () {
-    if (recording) { recording.stop(true); return; }
-    if (liveNative && navigator.mediaDevices) { window.speechSynthesis && speechSynthesis.cancel(); startLive(); return; }
-    if (!SR) return;
-    if (rec) { rec.stop(); return; }
+    if (talking && window.speechSynthesis && speechSynthesis.speaking) { speechSynthesis.cancel(); listenTurn(); return; }
+    if (talking) { endConversation(); return; }
+    if (!(liveNative && navigator.mediaDevices) && !SR) return;
+    talking = true; quietTurns = 0; listenTurn();
+  };
+  function heardNothing() {
+    quietTurns += 1;
+    if (talking && quietTurns < 2) listenTurn(); else endConversation();   // two silent turns end it
+  }
+  function listenTurn() {
+    if (!talking || busy) return;
+    window.speechSynthesis && speechSynthesis.cancel();
+    $(".mic").classList.add("on");
+    if (liveNative && navigator.mediaDevices) { startLive(); return; }
     rec = new SR(); rec.interimResults = true; rec.continuous = false; rec.lang = document.documentElement.lang || "en-US";
-    voiceMode = true; $(".mic").classList.add("on"); window.speechSynthesis && speechSynthesis.cancel();
+    voiceMode = true;
     var finalText = "";
     rec.onresult = function (e) {
       var interim = "";
@@ -357,17 +377,39 @@
       onDraft(input.value);
     };
     rec.onend = function () {
-      $(".mic").classList.remove("on"); rec = null;
-      if (input.value.trim()) send(input.value, screenStream ? "screen" : "audio");
-      voiceMode = false;
+      rec = null;
+      if (input.value.trim()) { quietTurns = 0; send(input.value, screenStream ? "screen" : "audio"); }
+      else heardNothing();
     };
-    rec.onerror = function () { $(".mic").classList.remove("on"); rec = null; voiceMode = false; };
+    rec.onerror = function (e) { rec = null; if (e.error === "not-allowed") endConversation(); };
     rec.start();
-  };
-  function speak(text) {
-    if (!window.speechSynthesis || !text) return;
-    var plain = text.replace(/```[\s\S]*?```/g, "").replace(/[*_`>#-]/g, "").slice(0, 600);
-    speechSynthesis.speak(new SpeechSynthesisUtterance(plain));
+  }
+  function narrate(ev) {
+    var host = function (u) { try { return new URL(/^https?:/.test(u) ? u : "https://" + u).hostname.replace(/^www\./, ""); } catch (e) { return ""; } };
+    var i = ev.input || {}, line = "";
+    if (ev.name === "browse") line = i.url ? "Opening " + host(i.url) : i.site_search ? "Searching " + i.site_search.site : "Finding that website";
+    else if (ev.name === "web_search") line = "Searching the web";
+    else if (ev.name === "read_page" && !narrate.read) { line = "Reading " + host(i.url); narrate.read = true; }
+    else if (ev.name === "read_screen") line = "Looking at your screen";
+    if (line) say(line);
+  }
+  function say(text, then) {
+    if (!window.speechSynthesis || !text) { if (then) then(); return; }
+    var u = new SpeechSynthesisUtterance(text);
+    if (then) { u.onend = then; u.onerror = then; }
+    speechSynthesis.speak(u);                          // queued after anything already being said
+  }
+  function speakable(text) {
+    var t = text.split(/\*\*Sources\*\*/)[0];                   // sources are for reading, not listening
+    t = t.replace(/```[\s\S]*?```/g, " (code shown on screen) ")
+         .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").replace(/https?:\/\/\S+/g, "")
+         .replace(/[*_`>#]/g, "").replace(/^\s*-\s+/gm, "").replace(/\s*\[\d+\]/g, "").replace(/✓/g, "");
+    if (/^\d+\. /m.test(t)) t = t.split(/\n(?=1\. )/)[0] + " Say open and a number to follow a link.";
+    return t.replace(/\s+/g, " ").trim().slice(0, 700);
+  }
+  function speak(text, then) {
+    narrate.read = false;
+    say(speakable(text || ""), then);
   }
 
   // Cast: share your screen. Each message you send carries a fresh frame of it.

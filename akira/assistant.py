@@ -38,6 +38,12 @@ from .native.engine import NativeBrains
 from .native.router import Router
 
 NATIVE_SYSTEM = "You are Akira, a helpful, friendly AI assistant. Answer clearly and briefly."
+# a question about what is on the shared screen (Cast answers it), as opposed to one about the world
+SCREEN_REF = re.compile(r"\b(screen|this|that|these|those|here|it|shown|showing|displayed|see|look(ing)? at|"
+                        r"on (my|the) (page|display|monitor))\b", re.I)
+# "open this page": go to the website that is on the shared screen
+THIS_PAGE = re.compile(r"\b(open|go to|visit|read|dive into|look into|browse|explore|check out)\b.{0,20}"
+                       r"\b(this|that|the) (site|website|page|web ?page|link|article)\b", re.I)
 SELF_INTRO = re.compile(r"(I'm|I am|My name is|You're talking to) Akira\b", re.I)
 IDENTITY_Q = re.compile(r"\b(who|what) (are|r) (you|u)\b|\byour name\b|\bwho (made|built|created) you\b|"
                         r"\bintroduce yourself\b|\babout yourself\b|\bare you (a |an )?(human|robot|ai|chatgpt|gemini)\b|"
@@ -129,9 +135,24 @@ class Akira:
                 yield {"type": "understood", "notes": done["understood"], "sources": sorted(prefetched)}
 
         brain = route.brain
+        web_on = os.environ.get("AKIRA_WEB", "on") != "off"
+
+        # Cast with the web: while you share your screen (and talk), Akira can still go online.
+        # "open this page" opens the website shown on your screen; a request that isn't about the
+        # screen ("search for...", "go to bbc.com", "why is the sky blue") goes online as usual.
+        if modality == "screen" and images and web_on:
+            if THIS_PAGE.search(text):
+                site = self._site_on_screen(images[0])
+                if site:
+                    yield {"type": "tool", "name": "read_screen", "input": {"found": site}, "where": "device"}
+                    text = f"go to {site}"
+            if not SCREEN_REF.search(text) and (web.browse_target(text, history) or route.web
+                                                 or research.wants_research(text)):
+                images, modality = [], "audio"
+                brain = brains.get("core", brains.tier_for_rank("core", brain.rank))
 
         # browsing: open a website, follow a link Akira listed, or search within a site
-        if os.environ.get("AKIRA_WEB", "on") != "off" and not images and brain.family in ("core", "una"):
+        if web_on and not images and brain.family in ("core", "una"):
             target = web.browse_target(text, history)
             if target:
                 yield {"type": "tool", "name": "browse", "input": target, "where": "internet"}
@@ -234,7 +255,6 @@ class Akira:
                 yield {"type": "done", "engine": f"native:{engine.brain}"}
                 return
         # Core's tiers: Standard answers instantly from the shared encyclopedia; Pro and Ultra research
-        web_on = os.environ.get("AKIRA_WEB", "on") != "off"
         if brain.family == "core" and not images and research.wants_research(text):
             if brain.rank == 0 and not route.web:
                 found, doc = self.knowledge.answer(text)
@@ -296,6 +316,21 @@ class Akira:
                     break
             yield {"type": "text", "text": answer}
         yield {"type": "done", "engine": f"native:{engine.brain}"}
+
+    def _site_on_screen(self, image):
+        """The web address shown on a shared screen (the address bar, a link), if Cast can read one."""
+        cast = self.cast.get()
+        if cast is None:
+            return None
+        try:
+            lines = cast.read(base64.b64decode(image["data"]))
+        except Exception:
+            return None
+        for line in lines:                       # top to bottom: the address bar comes first
+            found = web.URL.search(line["text"]) or web.DOMAIN.search(line["text"])
+            if found:
+                return found.group(0).rstrip(".,/")
+        return None
 
     def _native_screen_answer(self, question, screen_text, brain, history, stop):
         """Answer about the user's screen: show what Cast read, then let Core answer from it."""
