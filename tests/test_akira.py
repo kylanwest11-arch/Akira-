@@ -434,3 +434,15 @@ def test_cast_can_go_online_while_sharing_the_screen(monkeypatch):
     opened.clear()
     list(a.respond([{"role": "user", "content": "what does this error mean?"}], images=[screen], modality="screen"))
     assert not opened                      # about the screen: Cast answers, nothing is opened
+
+
+def test_spelling_snaps_sounds_to_words():
+    from akira.native.spelling import Speller
+    sp = Speller.from_texts(["ten minutes at least must have elapsed"] * 3 + ["the assistant manager was in the lobby"] * 3)
+    assert sp.correct("ten minits at least must have elapst") == "ten minutes at least must have elapsed"
+    assert sp.correct("tenminutes") == "ten minutes"
+
+
+def test_widget_waits_for_an_accurate_speech_brain():
+    js = open(os.path.join(os.path.dirname(__file__), "..", "web", "akira.js")).read()
+    assert "word_error_rate <= 0.3" in js

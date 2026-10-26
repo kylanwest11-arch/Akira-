@@ -182,7 +182,11 @@
 
   fetch(SERVER + "/v1/status", { headers: headers() }).then(function (r) { return r.json(); }).then(function (s) {
     var n = Object.keys(s.native_brains || {}).length;
-    liveNative = Object.keys(s.native_brains || {}).some(function (k) { return k.indexOf("live-") === 0; });
+    // Akira's own speech brain takes over from the browser's only once it gets most words right
+    liveNative = Object.keys(s.native_brains || {}).some(function (k) {
+      var b = s.native_brains[k];
+      return k.indexOf("live-") === 0 && b.word_error_rate != null && b.word_error_rate <= 0.3;
+    });
     if (liveNative) $(".mic").hidden = false;
     st.textContent = n ? (s.web ? "Akira · online" : "Akira") : "setting up";
   }).catch(function () { st.textContent = "offline"; });

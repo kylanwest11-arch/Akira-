@@ -157,16 +157,32 @@ class Live:
         self.net = ARCH[ck.get("arch", "transformer")](d, layers, heads)
         self.net.load_state_dict(ck["model"])
         self.net.eval()
+        self.speller = _speller(os.path.dirname(path))
         self.info = {"brain": self.brain, "parameters": sum(p.numel() for p in self.net.parameters()),
                      "steps": ck["state"]["step"], "hours_heard": round(ck["state"]["seconds_of_audio"] / 3600, 1),
                      "word_error_rate": ck["state"].get("wer")}
 
     @torch.no_grad()
     def transcribe(self, audio):
-        """16 kHz float waveform -> text."""
+        """16 kHz float waveform -> text, with what was heard snapped to real words."""
         f = features(audio)
         logp, n = self.net(f[None], torch.tensor([len(f)]))
-        return greedy_decode(logp[0], int(n[0]))
+        heard = greedy_decode(logp[0], int(n[0]))
+        return self.speller.correct(heard) if self.speller else heard
+
+
+def _speller(models_dir):
+    """Word list for the spelling fix: release/live-words.json, else Live's training transcripts."""
+    import json
+    from .spelling import Speller
+    for path in (os.path.join(models_dir, "live-words.json"), "data/live/train.json"):
+        if os.path.exists(path):
+            d = json.load(open(path))
+            if "counts" in d:
+                from collections import Counter
+                return Speller(Counter(d["counts"]), Counter({tuple(k.split(" ")): v for k, v in d["pairs"].items()}))
+            return Speller.from_texts(i["text"] for i in d["items"])
+    return None
 
 
 def load_best(models_dir="models"):
