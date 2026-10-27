@@ -186,11 +186,18 @@ def _speller(models_dir):
 
 
 def load_best(models_dir="models"):
+    """The tier that transcribes most accurately (lowest word error), so a bigger tier still in
+    training never replaces a better finished one."""
+    best, best_wer = None, float("inf")
     for name in ("live-max", "live-general", "live-lite"):
         path = os.path.join(models_dir, f"{name}.pt")
-        if os.path.exists(path):
-            return Live(path)
-    return None
+        if not os.path.exists(path):
+            continue
+        state = torch.load(path, map_location="cpu", weights_only=False).get("state", {})
+        wer = state.get("best_wer", state.get("wer", 9.9))
+        if wer < best_wer:
+            best, best_wer = path, wer
+    return Live(best) if best else None
 
 
 def word_error_rate(ref, hyp):
